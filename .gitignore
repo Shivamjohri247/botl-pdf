@@ -1,0 +1,53 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.coverprofile
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Dependency directories
+vendor/
+node_modules/
+package-lock.json
+*.log
+
+# Build output
+/build/
+/bin/
+/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Wails
+/frontend/wailsjs/
+/frontend/node_modules/
+/frontend/dist/
+
+# Project documentation (internal)
+CLAUDE.md
+PLAN.md
+DESIGN_SYSTEM.md
+AGENTS.md
+.claude/

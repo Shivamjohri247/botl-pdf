@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botl PDF - Design Preview</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #F5F7F6;
+            --bg-white: #FFFFFF;
+            --bg-sidebar: #F8F9FA;
+            --text-primary: #212529;
+            --text-secondary: #6C757D;
+            --text-muted: #979A98;
+            --accent-green: #10B981;
+            --accent-green-dark: #059669;
+            --accent-dark-green: #107130;
+            --sage-green: #AECDB1;
+            --border-color: #E9ECEF;
+            --input-border: #CED4DA;
+            --spacing-1: 4px;
+            --spacing-2: 8px;
+            --spacing-3: 12px;
+            --spacing-4: 16px;
+            --spacing-5: 20px;
+            --spacing-6: 24px;
+            --spacing-8: 32px;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 56px;
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--spacing-6);
+            gap: var(--spacing-6);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3);
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-green);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .header-spacer { flex: 1; }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-3);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-2);
+        }
+
+        .btn-primary {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-green-dark);
+        }
+
+        .btn-secondary {
+            background: var(--bg-white);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-sidebar);
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 56px);
+        }
+
+        .sidebar {
+            width: 200px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: var(--spacing-4);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .upload-btn {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .upload-btn:hover {
+            background: var(--accent-green-dark);
+        }
+
+        .pdf-files-list {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .pdf-file-item {
+            padding: var(--spacing-3) var(--spacing-4);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2);
+            cursor: pointer;
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .pdf-file-item:hover {
+            background: var(--border-color);
+        }
+
+        .pdf-file-item.active {
+            background: rgba(16, 185, 129, 0.1);
+            border-left-color: var(--accent-green);
+        }
+
+        .pdf-file-icon {
+            font-size: 16px;
+        }
+
+        .pdf-file-name {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pdf-file-remove {
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .pdf-file-item:hover .pdf-file-remove {
+            opacity: 1;
+        }
+
+        .pdf-file-remove:hover {
+            color: #ef4444;
+        }
+
+        .page-thumbnails {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-3);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-3);
+        }
+
+        .thumbnail {
+            width: 100%;
+            aspect-ratio: 0.707;
+            background: var(--bg-white);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-3);
+            transition: all 0.15s;
+        }
+
+        .thumbnail:hover {
+            border-color: var(--sage-green);
+        }
+
+        .thumbnail.active {
+            border-color: var(--accent-green);
+            background: var(--bg-white);
+            box-shadow: var(--shadow-md);
+        }
+
+        .thumbnail-preview {
+            flex: 1;
+            width: 100%;
+            background: #f0f0f0;
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--spacing-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text-muted);
+        }
+
+        .thumbnail-number {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #E5E7EB;
+        }
+
+        .pdf-viewer {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-8);
+            overflow: auto;
+        }
+
+        .pdf-page {
+            width: 595px;
+            height: 842px;
+            background: var(--bg-white);
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-sm);
+            padding: 48px;
+            position: relative;
+        }
+
+        .pdf-page.editing {
+            border: 2px dashed var(--accent-green);
+        }
+
+        .pdf-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-6);
+            color: var(--text-primary);
+        }
+
+        .pdf-section {
+            margin-bottom: var(--spacing-6);
+        }
+
+        .pdf-section-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent-dark-green);
+            margin-bottom: var(--spacing-3);
+            padding-bottom: var(--spacing-2);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .pdf-table th,
+        .pdf-table td {
+            padding: var(--spacing-3);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .pdf-table th {
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: var(--bg-sidebar);
+        }
+
+        .pdf-table td {
+            color: var(--text-primary);
+        }
+
+        /* Editable Elements */
+        .editable-text {
+            border: 1px dashed transparent;
+            padding: 2px 4px;
+            cursor: text;
+            transition: all 0.15s;
+        }
+
+        .pdf-page.editing .editable-text:hover {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .pdf-page.editing .editable-text:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        /* Text Insert Box */
+        .text-insert-box {
+            position: absolute;
+            min-width: 100px;
+            background: white;
+            border: 2px solid var(--accent-green);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-2);
+            font-size: 14px;
+            outline: none;
+            cursor: move;
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+        }
+
+        .text-insert-box .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            bottom: -6px;
+            right: -6px;
+            cursor: se-resize;
+        }
+
+        .text-insert-box .delete-btn {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50%;
+            top: -10px;
+            right: -10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Edit Mode Indicator */
+        .edit-mode-indicator {
+            position: absolute;
+            top: var(--spacing-4);
+            right: var(--spacing-4);
+            background: var(--accent-green);
+            color: white;
+            padding: var(--spacing-2) var(--spacing-3);
+            border-radius: var(--radius-md);
+            font-size: 11px;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            gap: var(--spacing-2);
+        }
+
+        .edit-mode-indicator.visible {
+            display: flex;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            height: 48px;
+            background: var(--bg-white);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--spacing-6);
+            gap: var(--spacing-4);
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2);
+            padding-right: var(--spacing-4);
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-right: var(--spacing-2);
+        }
+
+        .toolbar-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        /* Tooltip styling */
+        .toolbar-btn::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s;
+            margin-bottom: 6px;
+        }
+
+        .toolbar-btn:hover::after {
+            opacity: 1;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-sidebar);
+            color: var(--text-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .zoom-control {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2);
+            background: var(--bg-sidebar);
+            padding: var(--spacing-2);
+            border-radius: var(--radius-md);
+        }
+
+        .zoom-value {
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 48px;
+            text-align: center;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            width: 280px;
+            background: var(--bg-white);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel-header {
+            padding: var(--spacing-4);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .right-panel-content {
+            padding: var(--spacing-4);
+        }
+
+        .panel-section {
+            margin-bottom: var(--spacing-6);
+        }
+
+        .panel-section-title {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-3);
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-2);
+        }
+
+        .tool-item {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-1);
+            background: var(--bg-sidebar);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 2px solid transparent;
+        }
+
+        .tool-item:hover {
+            background: var(--border-color);
+        }
+
+        .tool-item.active {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .tool-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .icon path, .icon polyline, .icon line, .icon circle, .icon rect {
+            fill: currentColor;
+            stroke: none;
+        }
+
+        .icon circle[stroke], .icon line[stroke], .icon polyline[stroke] {
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3);
+            padding: var(--spacing-3);
+            background: var(--bg-sidebar);
+            border-radius: var(--radius-md);
+            margin-top: var(--spacing-4);
+        }
+
+        .page-info-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Add Text Button */
+        .add-text-btn {
+            position: fixed;
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: var(--spacing-3) var(--spacing-4);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: var(--spacing-2);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+        }
+
+        .add-text-btn.visible {
+            display: flex;
+        }
+
+        /* Text Formatting Toolbar */
+        .text-toolbar {
+            position: fixed;
+            background: var(--text-primary);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-2);
+            display: none;
+            gap: var(--spacing-1);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+        }
+
+        .text-toolbar.visible {
+            display: flex;
+        }
+
+        .text-toolbar-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: white;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .text-toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .text-toolbar-divider {
+            width: 1px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 0 var(--spacing-1);
+        }
+
+        .text-toolbar-select {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">B</div>
+            <span>Botl PDF</span>
+        </div>
+        <span class="header-title">/ invoice.pdf</span>
+        <div class="header-spacer"></div>
+        <div class="header-actions">
+            <button class="btn btn-secondary">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                Save
+            </button>
+            <button class="btn btn-secondary">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export
+            </button>
+            <button class="btn btn-primary">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                Merge
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                PDF Files
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">+ Add PDF</button>
+            </div>
+            <div class="pdf-files-list" id="pdfFilesList">
+                <div class="pdf-file-item active" data-file-id="1">
+                    <span class="pdf-file-icon">📄</span>
+                    <span class="pdf-file-name">invoice.pdf</span>
+                    <span class="pdf-file-remove" onclick="removeFile(event, 1)">&times;</span>
+                </div>
+            </div>
+            <div class="sidebar-header" id="pagesHeader">Pages (3)</div>
+            <div class="page-thumbnails" id="pageThumbnails">
+                <div class="thumbnail active" data-page="1" onclick="selectPage(1)">
+                    <div class="thumbnail-preview">📄</div>
+                    <span class="thumbnail-number">Page 1</span>
+                </div>
+                <div class="thumbnail" data-page="2" onclick="selectPage(2)">
+                    <div class="thumbnail-preview">📄</div>
+                    <span class="thumbnail-number">Page 2</span>
+                </div>
+                <div class="thumbnail" data-page="3" onclick="selectPage(3)">
+                    <div class="thumbnail-preview">📄</div>
+                    <span class="thumbnail-number">Page 3</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <div class="pdf-viewer">
+                <div class="pdf-page" id="pdfPage">
+                    <div class="edit-mode-indicator" id="editIndicator">
+                        <svg class="icon" style="width:14px;height:14px;" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        Edit Mode
+                    </div>
+
+                    <h1 class="pdf-title editable-text" contenteditable="false">INVOICE</h1>
+
+                    <div class="pdf-section">
+                        <div class="pdf-section-title editable-text" contenteditable="false">Invoice Details</div>
+                        <table class="pdf-table">
+                            <tr>
+                                <th>Invoice No.</th>
+                                <th>Date</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                            <tr>
+                                <td class="editable-text" contenteditable="false">INV-2024-001</td>
+                                <td class="editable-text" contenteditable="false">Jan 15, 2024</td>
+                                <td class="editable-text" contenteditable="false">Feb 15, 2024</td>
+                                <td><span style="color: var(--accent-green);">● Paid</span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="pdf-section">
+                        <div class="pdf-section-title editable-text" contenteditable="false">Customer Details</div>
+                        <table class="pdf-table">
+                            <tr>
+                                <td style="width: 50%;"><strong>Name:</strong> <span class="editable-text" contenteditable="false">John Smith</span></td>
+                                <td style="width: 50%;"><strong>Email:</strong> <span class="editable-text" contenteditable="false">john@example.com</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Company:</strong> <span class="editable-text" contenteditable="false">Tech Corp Inc.</span></td>
+                                <td><strong>Phone:</strong> <span class="editable-text" contenteditable="false">+1 234 567 890</span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="pdf-section">
+                        <div class="pdf-section-title editable-text" contenteditable="false">Line Items</div>
+                        <table class="pdf-table">
+                            <tr>
+                                <th>Description</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                            </tr>
+                            <tr>
+                                <td class="editable-text" contenteditable="false">Web Development Services</td>
+                                <td class="editable-text" contenteditable="false">40</td>
+                                <td class="editable-text" contenteditable="false">$85.00</td>
+                                <td class="editable-text" contenteditable="false">$3,400.00</td>
+                            </tr>
+                            <tr>
+                                <td class="editable-text" contenteditable="false">UI/UX Design</td>
+                                <td class="editable-text" contenteditable="false">20</td>
+                                <td class="editable-text" contenteditable="false">$95.00</td>
+                                <td class="editable-text" contenteditable="false">$1,900.00</td>
+                            </tr>
+                            <tr>
+                                <td class="editable-text" contenteditable="false">Project Management</td>
+                                <td class="editable-text" contenteditable="false">10</td>
+                                <td class="editable-text" contenteditable="false">$75.00</td>
+                                <td class="editable-text" contenteditable="false">$750.00</td>
+                            </tr>
+                            <tr style="border-top: 2px solid var(--border-color);">
+                                <td colspan="3" style="text-align: right; padding-top: 16px;"><strong>Total</strong></td>
+                                <td style="padding-top: 16px;"><strong class="editable-text" contenteditable="false">$6,050.00</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <span class="toolbar-label">Tools</span>
+                    <button class="toolbar-btn active" id="selectTool" onclick="setTool('select')" title="Select">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg>
+                    </button>
+                    <button class="toolbar-btn" id="textTool" onclick="setTool('text')" title="Text">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"></path></svg>
+                    </button>
+                    <button class="toolbar-btn" id="highlightTool" onclick="setTool('highlight')" title="Highlight">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 1 1 3.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <span class="toolbar-label">Page</span>
+                    <button class="toolbar-btn" title="Previous Page" onclick="changePage(-1)">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <span class="zoom-value" id="pageIndicator">2 / 3</span>
+                    <button class="toolbar-btn" title="Next Page" onclick="changePage(1)">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="zoomOutBtn" title="Zoom Out" onclick="zoom(-10)">
+                        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2"/></svg>
+                    </button>
+                    <span class="zoom-value" id="zoomLevel">100%</span>
+                    <button class="toolbar-btn" id="zoomInBtn" title="Zoom In" onclick="zoom(10)">
+                        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2"/></svg>
+                    </button>
+                    <button class="toolbar-btn" title="Fit to Page" onclick="zoom(0)">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" title="Rotate Left" onclick="rotate(-90)">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 8 8 3 8"></polyline></svg>
+                    </button>
+                    <button class="toolbar-btn" title="Rotate Right" onclick="rotate(90)">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><polyline points="21 3 16 8 21 8"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div class="right-panel-header">PDF Tools</div>
+            <div class="right-panel-content">
+                <div class="panel-section">
+                    <div class="panel-section-title">Text Formatting</div>
+                    <div class="tool-grid">
+                        <div class="tool-item" onclick="formatText('bold')">
+                            <div class="tool-icon"><strong>B</strong></div>
+                            <span class="tool-label">Bold</span>
+                        </div>
+                        <div class="tool-item" onclick="formatText('italic')">
+                            <div class="tool-icon"><em>I</em></div>
+                            <span class="tool-label">Italic</span>
+                        </div>
+                        <div class="tool-item" onclick="formatText('underline')">
+                            <div class="tool-icon"><u>U</u></div>
+                            <span class="tool-label">Underline</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-section-title">Document Actions</div>
+                    <div class="tool-grid">
+                        <div class="tool-item">
+                            <div class="tool-icon">📄</div>
+                            <span class="tool-label">Merge</span>
+                        </div>
+                        <div class="tool-item">
+                            <div class="tool-icon">✂️</div>
+                            <span class="tool-label">Split</span>
+                        </div>
+                        <div class="tool-item">
+                            <div class="tool-icon">📤</div>
+                            <span class="tool-label">Extract</span>
+                        </div>
+                        <div class="tool-item">
+                            <div class="tool-icon">🗑️</div>
+                            <span class="tool-label">Delete</span>
+                        </div>
+                        <div class="tool-item">
+                            <div class="tool-icon">🔒</div>
+                            <span class="tool-label">Protect</span>
+                        </div>
+                        <div class="tool-item">
+                            <div class="tool-icon">🔓</div>
+                            <span class="tool-label">Unlock</span>
+                        </div>
+                        <div class="tool-item">
+                            <div class="tool-icon">📝</div>
+                            <span class="tool-label">Watermark</span>
+                        </div>
+                        <div class="tool-item">
+                            <div class="tool-icon">🗜️</div>
+                            <span class="tool-label">Compress</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-info">
+                    <span style="font-size: 24px;">📄</span>
+                    <div>
+                        <div style="font-weight: 500; font-size: 13px;">invoice.pdf</div>
+                        <div class="page-info-text">3 pages • 245 KB</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Add Text Button -->
+    <button class="add-text-btn" id="addTextBtn" onclick="insertNewText()">
+        <svg class="icon" style="width:16px;height:16px;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add Text
+    </button>
+
+    <!-- Text Formatting Toolbar -->
+    <div class="text-toolbar" id="textToolbar">
+        <button class="text-toolbar-btn" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+        <button class="text-toolbar-btn" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+        <button class="text-toolbar-btn" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+        <div class="text-toolbar-divider"></div>
+        <button class="text-toolbar-btn" onclick="formatText('foreColor', '#ef4444')" title="Red" style="color:#ef4444">A</button>
+        <button class="text-toolbar-btn" onclick="formatText('foreColor', '#10b981')" title="Green" style="color:#10b981">A</button>
+        <button class="text-toolbar-btn" onclick="formatText('foreColor', '#212529')" title="Black" style="color:#212529">A</button>
+    </div>
+
+    <input type="file" id="fileInput" accept=".pdf" multiple style="display:none" onchange="handleFileUpload(event)">
+
+    <script>
+        let currentTool = 'select';
+        let currentPage = 2;
+        let currentZoom = 100;
+        let currentFileId = 1;
+        let fileIdCounter = 2;
+
+        // PDF files data structure
+        const pdfFiles = {
+            1: { name: 'invoice.pdf', pages: 3 }
+        };
+
+        const pdfPage = document.getElementById('pdfPage');
+        const editIndicator = document.getElementById('editIndicator');
+        const addTextBtn = document.getElementById('addTextBtn');
+        const textToolbar = document.getElementById('textToolbar');
+        const pagesHeader = document.getElementById('pagesHeader');
+        const pageThumbnails = document.getElementById('pageThumbnails');
+        const pdfFilesList = document.getElementById('pdfFilesList');
+
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.toolbar-btn').forEach(btn => btn.classList.remove('active'));
+            const toolBtn = document.getElementById(tool + 'Tool');
+            if (toolBtn) toolBtn.classList.add('active');
+
+            const editables = document.querySelectorAll('.editable-text');
+
+            if (tool === 'text') {
+                pdfPage.classList.add('editing');
+                editIndicator.classList.add('visible');
+                editables.forEach(el => el.contentEditable = 'true');
+            } else {
+                pdfPage.classList.remove('editing');
+                editIndicator.classList.remove('visible');
+                editables.forEach(el => el.contentEditable = 'false');
+            }
+        }
+
+        function formatText(command, value) {
+            if (currentTool !== 'text') {
+                setTool('text');
+            }
+            document.execCommand(command, false, value);
+        }
+
+        function insertNewText() {
+            const textBox = document.createElement('div');
+            textBox.className = 'text-insert-box';
+            textBox.contentEditable = 'true';
+            textBox.innerText = 'New Text';
+            textBox.style.left = addTextBtn.dataset.x || '100px';
+            textBox.style.top = addTextBtn.dataset.y || '100px';
+
+            const resizeHandle = document.createElement('span');
+            resizeHandle.className = 'resize-handle';
+            textBox.appendChild(resizeHandle);
+
+            const deleteBtn = document.createElement('span');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.onclick = () => textBox.remove();
+            textBox.appendChild(deleteBtn);
+
+            // Make draggable
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+
+            textBox.addEventListener('mousedown', (e) => {
+                if (e.target !== resizeHandle && e.target !== deleteBtn) {
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startLeft = parseInt(textBox.style.left) || 0;
+                    startTop = parseInt(textBox.style.top) || 0;
+                    e.preventDefault();
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    textBox.style.left = (startLeft + e.clientX - startX) + 'px';
+                    textBox.style.top = (startTop + e.clientY - startY) + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            pdfPage.appendChild(textBox);
+            addTextBtn.classList.remove('visible');
+            textBox.focus();
+        }
+
+        function selectPage(page) {
+            currentPage = page;
+            const totalPages = pdfFiles[currentFileId]?.pages || 3;
+            document.getElementById('pageIndicator').textContent = page + ' / ' + totalPages;
+            document.querySelectorAll('.thumbnail').forEach((t, i) => {
+                t.classList.toggle('active', parseInt(t.dataset.page) === page);
+            });
+        }
+
+        function changePage(delta) {
+            const totalPages = pdfFiles[currentFileId]?.pages || 3;
+            const newPage = currentPage + delta;
+            if (newPage >= 1 && newPage <= totalPages) {
+                selectPage(newPage);
+            }
+        }
+
+        function zoom(delta) {
+            if (delta === 0) {
+                // Reset to 100%
+                currentZoom = 100;
+            } else {
+                currentZoom = Math.max(50, Math.min(200, currentZoom + delta));
+            }
+            document.getElementById('zoomLevel').textContent = currentZoom + '%';
+            pdfPage.style.transform = 'scale(' + (currentZoom / 100) + ')';
+        }
+
+        function rotate(degrees) {
+            const currentRotation = parseInt(pdfPage.dataset.rotation || 0);
+            const newRotation = currentRotation + degrees;
+            pdfPage.dataset.rotation = newRotation;
+            pdfPage.style.transform = `scale(${currentZoom / 100}) rotate(${newRotation}deg)`;
+        }
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            for (let file of files) {
+                if (file.type === 'application/pdf') {
+                    addPdfFile(file.name);
+                }
+            }
+            event.target.value = ''; // Reset input
+        }
+
+        function addPdfFile(fileName) {
+            const fileId = fileIdCounter++;
+            const pageCount = Math.floor(Math.random() * 5) + 1; // Simulated page count
+
+            pdfFiles[fileId] = { name: fileName, pages: pageCount };
+
+            const fileItem = document.createElement('div');
+            fileItem.className = 'pdf-file-item';
+            fileItem.dataset.fileId = fileId;
+            fileItem.onclick = () => selectFile(fileId);
+            fileItem.innerHTML = `
+                <span class="pdf-file-icon">📄</span>
+                <span class="pdf-file-name">${fileName}</span>
+                <span class="pdf-file-remove" onclick="removeFile(event, ${fileId})">&times;</span>
+            `;
+
+            pdfFilesList.appendChild(fileItem);
+
+            // Simulate adding pages to thumbnails
+            for (let i = 1; i <= pageCount; i++) {
+                const thumb = document.createElement('div');
+                thumb.className = 'thumbnail';
+                thumb.dataset.page = i;
+                thumb.dataset.fileId = fileId;
+                thumb.onclick = () => { selectFile(fileId); selectPage(i); };
+                thumb.innerHTML = `
+                    <div class="thumbnail-preview">📄</div>
+                    <span class="thumbnail-number">Page ${i}</span>
+                `;
+                pageThumbnails.appendChild(thumb);
+            }
+
+            // Auto-select the new file
+            selectFile(fileId);
+        }
+
+        function selectFile(fileId) {
+            currentFileId = fileId;
+            currentPage = 1;
+
+            // Update active file item
+            document.querySelectorAll('.pdf-file-item').forEach(item => {
+                item.classList.toggle('active', parseInt(item.dataset.fileId) === fileId);
+            });
+
+            // Update thumbnails to show only pages from selected file
+            updateThumbnails();
+
+            // Update page indicator
+            const totalPages = pdfFiles[fileId]?.pages || 3;
+            document.getElementById('pageIndicator').textContent = '1 / ' + totalPages;
+
+            // Update header title
+            document.querySelector('.header-title').textContent = '/ ' + pdfFiles[fileId]?.name || 'document.pdf';
+        }
+
+        function updateThumbnails() {
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                const thumbFileId = parseInt(thumb.dataset.fileId);
+                thumb.style.display = thumbFileId === currentFileId ? 'flex' : 'none';
+                thumb.classList.toggle('active', thumbFileId === currentFileId && parseInt(thumb.dataset.page) === currentPage);
+            });
+
+            // Update pages header
+            const totalPages = pdfFiles[currentFileId]?.pages || 0;
+            pagesHeader.textContent = 'Pages (' + totalPages + ')';
+        }
+
+        function removeFile(event, fileId) {
+            event.stopPropagation();
+
+            // Remove from data
+            delete pdfFiles[fileId];
+
+            // Remove from DOM
+            const fileItem = document.querySelector(`.pdf-file-item[data-file-id="${fileId}"]`);
+            if (fileItem) fileItem.remove();
+
+            // Remove thumbnails
+            document.querySelectorAll(`.thumbnail[data-file-id="${fileId}"]`).forEach(thumb => thumb.remove());
+
+            // If this was the active file, select another one
+            if (fileId === currentFileId) {
+                const remainingFiles = Object.keys(pdfFiles);
+                if (remainingFiles.length > 0) {
+                    selectFile(parseInt(remainingFiles[0]));
+                } else {
+                    // No files left
+                    pagesHeader.textContent = 'Pages (0)';
+                }
+            }
+        }
+
+        // Click on PDF page to show add text button
+        pdfPage.addEventListener('click', (e) => {
+            if (currentTool === 'text' && e.target === pdfPage) {
+                const rect = pdfPage.getBoundingClientRect();
+                addTextBtn.dataset.x = (e.clientX - rect.left) + 'px';
+                addTextBtn.dataset.y = (e.clientY - rect.top) + 'px';
+                addTextBtn.style.left = e.clientX + 'px';
+                addTextBtn.style.top = e.clientY + 'px';
+                addTextBtn.classList.add('visible');
+            } else {
+                addTextBtn.classList.remove('visible');
+            }
+        });
+
+        // Hide add text button when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.pdf-page') && !e.target.closest('.add-text-btn')) {
+                addTextBtn.classList.remove('visible');
+            }
+        });
+
+        // Show/hide text toolbar on selection
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (selection.toString().length > 0 && currentTool === 'text') {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                textToolbar.style.top = (rect.top + window.scrollY - 45) + 'px';
+                textToolbar.style.left = (rect.left + rect.width / 2 - 80) + 'px';
+                textToolbar.classList.add('visible');
+            } else {
+                textToolbar.classList.remove('visible');
+            }
+        });
+
+        // Also support drag and drop
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const files = e.dataTransfer.files;
+            for (let file of files) {
+                if (file.type === 'application/pdf') {
+                    addPdfFile(file.name);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

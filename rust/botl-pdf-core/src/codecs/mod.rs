@@ -1,6 +1,6 @@
-pub mod flate;
 pub mod ascii85;
 pub mod asciihex;
+pub mod flate;
 pub mod lzw;
 pub mod runlength;
 
@@ -85,9 +85,6 @@ fn apply_filter(filter: &str, data: &[u8], params: Option<&PdfDict>) -> Result<V
         "JBIG2Decode" => Err(BotlError::UnsupportedFeature(
             "JBIG2Decode — not yet implemented".into(),
         )),
-        _ => Err(BotlError::CodecError(format!(
-            "Unknown filter: {}",
-            filter
-        ))),
+        _ => Err(BotlError::CodecError(format!("Unknown filter: {}", filter))),
     }
 }

@@ -1,5 +1,5 @@
 use crate::error::{BotlError, Result};
-use crate::parser::xref::{XrefTable, find_startxref, parse_xref_table};
+use crate::parser::xref::{find_startxref, parse_xref_table, XrefTable};
 
 /// Find all xref sections in a PDF with incremental updates.
 /// Returns them in file order (earliest first).
@@ -11,7 +11,9 @@ pub fn find_all_xref_sections(data: &[u8]) -> Result<Vec<XrefTable>> {
     let xref_start = startxref as usize;
 
     if xref_start >= data.len() {
-        return Err(BotlError::XrefError("startxref points past end of file".into()));
+        return Err(BotlError::XrefError(
+            "startxref points past end of file".into(),
+        ));
     }
 
     let remaining = crate::parser::lexer::skip_ws(&data[xref_start..]);

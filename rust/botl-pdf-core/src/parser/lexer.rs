@@ -109,7 +109,10 @@ fn take_ascii_digits(input: &[u8]) -> IResult<&[u8], &[u8]> {
         .position(|&b| !b.is_ascii_digit())
         .unwrap_or(input.len());
     if end == 0 {
-        return Err(nom::Err::Error(nom::error::make_error(input, ErrorKind::Digit)));
+        return Err(nom::Err::Error(nom::error::make_error(
+            input,
+            ErrorKind::Digit,
+        )));
     }
     Ok((&input[end..], &input[..end]))
 }
@@ -238,7 +241,10 @@ pub fn parse_literal_string(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
             }
         }
     }
-    Err(nom::Err::Error(nom::error::make_error(input, ErrorKind::Tag)))
+    Err(nom::Err::Error(nom::error::make_error(
+        input,
+        ErrorKind::Tag,
+    )))
 }
 
 /// Parse a hex string `<48656C6C6F>`.
@@ -272,7 +278,10 @@ pub fn parse_hex_string(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
         }
         i += 1;
     }
-    Err(nom::Err::Error(nom::error::make_error(input, ErrorKind::Tag)))
+    Err(nom::Err::Error(nom::error::make_error(
+        input,
+        ErrorKind::Tag,
+    )))
 }
 
 /// Parse a name object `/Type` or `/Name#20WithSpaces`.
@@ -414,9 +423,7 @@ pub fn next_token(input: &[u8]) -> IResult<&[u8], Token<'_>> {
     if input[0].is_ascii_alphabetic() {
         let end = input
             .iter()
-            .position(|&b| {
-                !(b.is_ascii_alphanumeric() || b == b'_')
-            })
+            .position(|&b| !(b.is_ascii_alphanumeric() || b == b'_'))
             .unwrap_or(input.len());
         if end > 0 {
             return Ok((&input[end..], Token::Name(input[..end].to_vec())));
@@ -436,8 +443,21 @@ fn is_token_boundary(input: &[u8], len: usize) -> bool {
     let b = input[len];
     matches!(
         b,
-        b' ' | b'\t' | b'\r' | b'\n' | b'\x0c' | b'\x00' | b'(' | b')' | b'<' | b'>'
-            | b'[' | b']' | b'{' | b'}' | b'/' | b'%'
+        b' ' | b'\t'
+            | b'\r'
+            | b'\n'
+            | b'\x0c'
+            | b'\x00'
+            | b'('
+            | b')'
+            | b'<'
+            | b'>'
+            | b'['
+            | b']'
+            | b'{'
+            | b'}'
+            | b'/'
+            | b'%'
     )
 }
 

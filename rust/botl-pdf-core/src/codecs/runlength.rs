@@ -16,14 +16,18 @@ pub fn decode(data: &[u8]) -> Result<Vec<u8>> {
         if length_byte >= 0 && length_byte <= 127 {
             let count = (length_byte + 1) as usize;
             if i + count > data.len() {
-                return Err(BotlError::CodecError("Unexpected end of RunLength data".into()));
+                return Err(BotlError::CodecError(
+                    "Unexpected end of RunLength data".into(),
+                ));
             }
             output.extend_from_slice(&data[i..i + count]);
             i += count;
         } else if length_byte >= 129 {
             let count = (257 - length_byte as i16) as usize;
             if i >= data.len() {
-                return Err(BotlError::CodecError("Unexpected end of RunLength data".into()));
+                return Err(BotlError::CodecError(
+                    "Unexpected end of RunLength data".into(),
+                ));
             }
             output.extend(std::iter::repeat(data[i]).take(count));
             i += 1;

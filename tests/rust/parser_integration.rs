@@ -5,7 +5,7 @@
 use botl_pdf_core::error::BotlError;
 use botl_pdf_core::parser::document::Document;
 use botl_pdf_core::parser::objects::ObjRef;
-use botl_pdf_core::parser::xref::{XrefEntry, parse_xref_from_data, find_startxref};
+use botl_pdf_core::parser::xref::{find_startxref, parse_xref_from_data, XrefEntry};
 
 /// Helper to get the absolute path to a fixture file.
 fn fixture_path(name: &str) -> std::path::PathBuf {
@@ -27,7 +27,11 @@ fn fixture_path(name: &str) -> std::path::PathBuf {
 fn test_open_simple_text_pdf() {
     let path = fixture_path("simple_text.pdf");
     let doc = Document::open(&path);
-    assert!(doc.is_ok(), "Failed to open simple_text.pdf: {:?}", doc.err());
+    assert!(
+        doc.is_ok(),
+        "Failed to open simple_text.pdf: {:?}",
+        doc.err()
+    );
 }
 
 #[test]
@@ -35,7 +39,11 @@ fn test_parse_from_bytes() {
     let path = fixture_path("simple_text.pdf");
     let bytes = std::fs::read(&path).expect("Failed to read fixture file");
     let doc = Document::from_bytes(bytes);
-    assert!(doc.is_ok(), "Failed to parse simple_text.pdf from bytes: {:?}", doc.err());
+    assert!(
+        doc.is_ok(),
+        "Failed to parse simple_text.pdf from bytes: {:?}",
+        doc.err()
+    );
 }
 
 #[test]
@@ -72,7 +80,11 @@ fn test_version_simple_text() {
     let version = doc.version();
     assert!(version.is_some(), "PDF should have a version");
     let v = version.unwrap();
-    assert!(v.starts_with("1."), "Version should start with 1., got: {}", v);
+    assert!(
+        v.starts_with("1."),
+        "Version should start with 1., got: {}",
+        v
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -171,7 +183,10 @@ fn test_page_has_contents_reference() {
     let page = doc.get_page(0).unwrap();
 
     let contents_ref = page.get_reference("Contents");
-    assert!(contents_ref.is_some(), "Page should have Contents reference");
+    assert!(
+        contents_ref.is_some(),
+        "Page should have Contents reference"
+    );
 }
 
 #[test]
@@ -185,7 +200,10 @@ fn test_page_has_resources() {
 
     let res = resources.unwrap();
     let font_dict = res.get_dict("Font");
-    assert!(font_dict.is_some(), "Resources should have Font subdictionary");
+    assert!(
+        font_dict.is_some(),
+        "Resources should have Font subdictionary"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -241,7 +259,10 @@ fn test_resolve_content_stream() {
 
     // Verify the stream contains the text "Hello World"
     let content = std::str::from_utf8(&stream.data).unwrap();
-    assert!(content.contains("Hello World"), "Content stream should contain 'Hello World'");
+    assert!(
+        content.contains("Hello World"),
+        "Content stream should contain 'Hello World'"
+    );
 }
 
 #[test]
@@ -295,7 +316,10 @@ fn test_metadata_pdf_with_info() {
 fn test_is_not_encrypted() {
     let path = fixture_path("simple_text.pdf");
     let doc = Document::open(&path).unwrap();
-    assert!(!doc.is_encrypted(), "simple_text.pdf should not be encrypted");
+    assert!(
+        !doc.is_encrypted(),
+        "simple_text.pdf should not be encrypted"
+    );
 }
 
 #[test]
@@ -344,7 +368,10 @@ fn test_find_startxref() {
     assert!(result.is_ok(), "Should find startxref");
     let offset = result.unwrap();
     assert!(offset > 0, "startxref offset should be positive");
-    assert!((offset as usize) < bytes.len(), "startxref should be within file bounds");
+    assert!(
+        (offset as usize) < bytes.len(),
+        "startxref should be within file bounds"
+    );
 }
 
 #[test]
@@ -369,7 +396,10 @@ fn test_multi_page_xref() {
     let xref = doc.xref();
 
     // multi_page.pdf has more objects due to multiple pages
-    assert!(xref.len() >= 10, "multi_page xref should have at least 10 entries");
+    assert!(
+        xref.len() >= 10,
+        "multi_page xref should have at least 10 entries"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -457,6 +487,9 @@ fn test_document_data_access() {
     let doc = Document::open(&path).unwrap();
     let data = doc.data();
 
-    assert!(data.starts_with(b"%PDF-"), "Data should start with %PDF- header");
+    assert!(
+        data.starts_with(b"%PDF-"),
+        "Data should start with %PDF- header"
+    );
     assert!(data.len() > 100, "Data should have reasonable length");
 }

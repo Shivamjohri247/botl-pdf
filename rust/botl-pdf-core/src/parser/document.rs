@@ -1,6 +1,6 @@
 use crate::error::{BotlError, Result};
-use crate::parser::objects::{IndirectObject, ObjRef, PdfDict, PdfObject, PdfStream, ObjectParser};
-use crate::parser::xref::{XrefEntry, XrefTable, parse_xref_from_data};
+use crate::parser::objects::{IndirectObject, ObjRef, ObjectParser, PdfDict, PdfObject, PdfStream};
+use crate::parser::xref::{parse_xref_from_data, XrefEntry, XrefTable};
 use hashbrown::HashMap;
 use std::path::Path;
 
@@ -94,15 +94,17 @@ impl Document {
             } => {
                 // Load the object stream
                 let stream_obj = self.resolve(ObjRef::new(obj_stream_num, 0))?;
-                let stream = stream_obj
-                    .into_stream()
-                    .ok_or_else(|| BotlError::ParseError("Expected stream for object stream".into()))?;
+                let stream = stream_obj.into_stream().ok_or_else(|| {
+                    BotlError::ParseError("Expected stream for object stream".into())
+                })?;
                 self.parse_object_from_stream(&stream, index)?
             }
-            XrefEntry::Free { .. } => return Err(BotlError::ParseError(format!(
-                "Object {} is free (not in use)",
-                reference.obj_num
-            ))),
+            XrefEntry::Free { .. } => {
+                return Err(BotlError::ParseError(format!(
+                    "Object {} is free (not in use)",
+                    reference.obj_num
+                )))
+            }
         };
 
         self.object_cache.insert(reference.obj_num, object.clone());
@@ -110,17 +112,23 @@ impl Document {
     }
 
     /// Parse objects from an object stream (ObjStm).
-    fn parse_object_from_stream(&mut self, stream: &PdfStream, target_index: u32) -> Result<PdfObject> {
+    fn parse_object_from_stream(
+        &mut self,
+        stream: &PdfStream,
+        target_index: u32,
+    ) -> Result<PdfObject> {
         let decoded = crate::codecs::decode_stream_data(stream)?;
 
         let n = stream
             .dict
             .get_integer("N")
-            .ok_or_else(|| BotlError::ParseError("Object stream missing N".into()))? as u32;
+            .ok_or_else(|| BotlError::ParseError("Object stream missing N".into()))?
+            as u32;
         let first = stream
             .dict
             .get_integer("First")
-            .ok_or_else(|| BotlError::ParseError("Object stream missing First".into()))? as usize;
+            .ok_or_else(|| BotlError::ParseError("Object stream missing First".into()))?
+            as usize;
 
         // Parse the header: pairs of (obj_num, offset) for N objects
         let header_data = &decoded[..first];
@@ -133,7 +141,9 @@ impl Document {
         }
 
         if (target_index as usize) >= pairs.len() {
-            return Err(BotlError::ParseError("Object stream index out of range".into()));
+            return Err(BotlError::ParseError(
+                "Object stream index out of range".into(),
+            ));
         }
 
         let (_obj_num, offset) = pairs[target_index as usize];
@@ -144,7 +154,10 @@ impl Document {
 
     /// Get the root catalog dictionary.
     pub fn catalog(&mut self) -> Result<PdfDict> {
-        let root_ref = self.xref.root().ok_or_else(|| BotlError::ParseError("No Root".into()))?;
+        let root_ref = self
+            .xref
+            .root()
+            .ok_or_else(|| BotlError::ParseError("No Root".into()))?;
         let obj = self.resolve(root_ref)?;
         obj.into_dict()
             .ok_or_else(|| BotlError::ParseError("Root is not a dictionary".into()))
@@ -290,7 +303,12 @@ impl Document {
         Ok(())
     }
 
-    fn find_page(&mut self, node_ref: ObjRef, target: usize, counter: &mut usize) -> Result<PdfDict> {
+    fn find_page(
+        &mut self,
+        node_ref: ObjRef,
+        target: usize,
+        counter: &mut usize,
+    ) -> Result<PdfDict> {
         let node_obj = self.resolve(node_ref)?;
         let node = node_obj
             .into_dict()
@@ -327,9 +345,9 @@ impl Document {
                 .ok_or_else(|| BotlError::ParseError("Kid is not a reference".into()))?;
             let kid_count = {
                 let kid_obj = self.resolve(kid_ref)?;
-                let kid_dict = kid_obj.as_dict().ok_or_else(|| {
-                    BotlError::ParseError("Kid is not a dictionary".into())
-                })?;
+                let kid_dict = kid_obj
+                    .as_dict()
+                    .ok_or_else(|| BotlError::ParseError("Kid is not a dictionary".into()))?;
                 if kid_dict.get_name("Type") == Some("Page") {
                     1
                 } else {

@@ -13,10 +13,7 @@ impl<T> RTreeObject for SpatialItem<T> {
     type Envelope = AABB<[f64; 2]>;
 
     fn envelope(&self) -> Self::Envelope {
-        AABB::from_corners(
-            [self.bbox.x0, self.bbox.y0],
-            [self.bbox.x1, self.bbox.y1],
-        )
+        AABB::from_corners([self.bbox.x0, self.bbox.y0], [self.bbox.x1, self.bbox.y1])
     }
 }
 
@@ -34,10 +31,7 @@ impl<T: Clone> SpatialIndex<T> {
 
     /// Find all items whose bboxes overlap with the query bbox.
     pub fn query(&self, bbox: &BBox) -> Vec<&SpatialItem<T>> {
-        let envelope = AABB::from_corners(
-            [bbox.x0, bbox.y0],
-            [bbox.x1, bbox.y1],
-        );
+        let envelope = AABB::from_corners([bbox.x0, bbox.y0], [bbox.x1, bbox.y1]);
         self.tree
             .locate_in_envelope_intersecting(&envelope)
             .collect()

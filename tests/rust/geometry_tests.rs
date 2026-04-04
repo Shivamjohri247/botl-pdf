@@ -124,10 +124,13 @@ fn test_bbox_overlaps_with_threshold() {
     // Two boxes with a small overlap area
     let a = BBox::new(0.0, 0.0, 10.0, 10.0); // area = 100
     let b = BBox::new(9.0, 0.0, 19.0, 10.0); // overlap area = 1x10 = 10
-    // 10 / min(100, 100) = 0.1
+                                             // 10 / min(100, 100) = 0.1
     assert!(a.overlaps(&b, 0.0), "Should overlap with threshold 0");
     assert!(a.overlaps(&b, 0.05), "Should overlap with threshold 0.05");
-    assert!(!a.overlaps(&b, 0.15), "Should not overlap with threshold 0.15");
+    assert!(
+        !a.overlaps(&b, 0.15),
+        "Should not overlap with threshold 0.15"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -491,7 +494,11 @@ fn test_spatial_index_query_hit() {
 
     let query = BBox::new(5.0, 5.0, 15.0, 15.0);
     let results = index.query(&query);
-    assert_eq!(results.len(), 1, "Should find exactly 1 item overlapping the query");
+    assert_eq!(
+        results.len(),
+        1,
+        "Should find exactly 1 item overlapping the query"
+    );
     assert_eq!(results[0].data, 1);
 }
 
@@ -515,7 +522,11 @@ fn test_spatial_index_query_multiple_hits() {
 
     let query = BBox::new(0.0, 0.0, 15.0, 15.0);
     let results = index.query(&query);
-    assert_eq!(results.len(), 2, "Should find 2 items overlapping the query");
+    assert_eq!(
+        results.len(),
+        2,
+        "Should find 2 items overlapping the query"
+    );
 
     let found_data: Vec<i32> = results.iter().map(|r| r.data).collect();
     assert!(found_data.contains(&1));

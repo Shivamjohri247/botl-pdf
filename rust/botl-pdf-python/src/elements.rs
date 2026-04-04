@@ -201,7 +201,11 @@ impl PyWord {
     /// The characters that make up this word.
     #[getter]
     fn chars(&self) -> Vec<PyChar> {
-        self.inner.chars.iter().map(|c| PyChar::new(c.clone())).collect()
+        self.inner
+            .chars
+            .iter()
+            .map(|c| PyChar::new(c.clone()))
+            .collect()
     }
 
     /// Text direction (``"ltr"``, ``"rtl"``, ``"ttb"``, ``"btt"``).
@@ -261,7 +265,11 @@ impl PyTextLine {
     /// All words in this line, in reading order.
     #[getter]
     fn words(&self) -> Vec<PyWord> {
-        self.inner.words.iter().map(|w| PyWord::new(w.clone())).collect()
+        self.inner
+            .words
+            .iter()
+            .map(|w| PyWord::new(w.clone()))
+            .collect()
     }
 
     /// Bounding box enclosing all words.
@@ -303,7 +311,11 @@ impl PyTextBlock {
     /// All lines in this block, in reading order.
     #[getter]
     fn lines(&self) -> Vec<PyTextLine> {
-        self.inner.lines.iter().map(|l| PyTextLine::new(l.clone())).collect()
+        self.inner
+            .lines
+            .iter()
+            .map(|l| PyTextLine::new(l.clone()))
+            .collect()
     }
 
     /// Bounding box enclosing all lines.

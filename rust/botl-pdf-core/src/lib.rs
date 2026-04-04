@@ -1,8 +1,8 @@
+pub mod codecs;
 pub mod error;
 pub mod geometry;
-pub mod parser;
-pub mod codecs;
-pub mod text;
 pub mod layout;
+pub mod parser;
+pub mod text;
 
 pub use error::BotlError;

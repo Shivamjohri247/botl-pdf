@@ -14,10 +14,7 @@ pub enum BotlError {
     PasswordRequired,
 
     #[error("Page {page} out of range (document has {total} pages)")]
-    PageOutOfRange {
-        page: usize,
-        total: usize,
-    },
+    PageOutOfRange { page: usize, total: usize },
 
     #[error("Unsupported feature: {0}")]
     UnsupportedFeature(String),

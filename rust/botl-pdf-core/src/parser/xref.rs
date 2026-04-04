@@ -5,15 +5,9 @@ use crate::parser::objects::{ObjRef, PdfDict};
 #[derive(Debug, Clone, Copy)]
 pub enum XrefEntry {
     /// In-use entry: points to byte offset in the file.
-    InUse {
-        offset: u64,
-        gen_num: u16,
-    },
+    InUse { offset: u64, gen_num: u16 },
     /// Free entry: the object number of the next free object.
-    Free {
-        next_free: u32,
-        gen_num: u16,
-    },
+    Free { next_free: u32, gen_num: u16 },
     /// Compressed entry: stored in an object stream.
     Compressed {
         /// Object number of the containing object stream.
@@ -115,7 +109,7 @@ pub fn parse_xref_table(data: &[u8]) -> Result<XrefTable> {
         let remaining = &data[pos..];
         if remaining.starts_with(b"trailer") {
             pos += 7; // skip "trailer"
-            // Parse trailer dictionary
+                      // Parse trailer dictionary
             let mut obj_parser = crate::parser::objects::ObjectParser::new(&data[pos..]);
             let trailer_obj = obj_parser.parse_object()?;
             trailer = trailer_obj
@@ -215,7 +209,9 @@ pub fn parse_xref_from_data(data: &[u8]) -> Result<XrefTable> {
 
     let xref_start = startxref as usize;
     if xref_start >= data.len() {
-        return Err(BotlError::XrefError("startxref points past end of file".into()));
+        return Err(BotlError::XrefError(
+            "startxref points past end of file".into(),
+        ));
     }
 
     // Check if it's a traditional xref table or an xref stream
@@ -240,7 +236,8 @@ fn parse_xref_stream(data: &[u8], offset: usize) -> Result<XrefTable> {
     let size = stream
         .dict
         .get_integer("Size")
-        .ok_or_else(|| BotlError::XrefError("Xref stream missing Size".into()))? as u32;
+        .ok_or_else(|| BotlError::XrefError("Xref stream missing Size".into()))?
+        as u32;
 
     // Get W array (field widths)
     let w_array = stream
@@ -409,8 +406,14 @@ mod tests {
         let xref = parse_xref_table(xref_data).unwrap();
         assert_eq!(xref.len(), 3);
         assert!(matches!(xref.get(0), Some(XrefEntry::Free { .. })));
-        assert!(matches!(xref.get(1), Some(XrefEntry::InUse { offset: 9, .. })));
-        assert!(matches!(xref.get(2), Some(XrefEntry::InUse { offset: 58, .. })));
+        assert!(matches!(
+            xref.get(1),
+            Some(XrefEntry::InUse { offset: 9, .. })
+        ));
+        assert!(matches!(
+            xref.get(2),
+            Some(XrefEntry::InUse { offset: 58, .. })
+        ));
         assert_eq!(xref.root(), Some(ObjRef::new(1, 0)));
     }
 }

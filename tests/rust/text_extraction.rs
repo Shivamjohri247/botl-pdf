@@ -30,7 +30,11 @@ fn test_interpret_simple_text_content_stream() {
     let result = interpret_content_stream(data, &font_cache, 792.0).unwrap();
 
     // "Hello World" has 11 characters
-    assert_eq!(result.chars.len(), 11, "Should extract 11 characters from 'Hello World'");
+    assert_eq!(
+        result.chars.len(),
+        11,
+        "Should extract 11 characters from 'Hello World'"
+    );
 
     // Check the first and last characters
     assert_eq!(result.chars[0].text, "H");
@@ -97,7 +101,11 @@ fn test_interpret_tm_sets_text_matrix() {
     assert!(!result.chars.is_empty());
     // First character should be at x ~50
     let first_x = result.chars[0].bbox.x0;
-    assert!((first_x - 50.0).abs() < 2.0, "First char x should be ~50, got {}", first_x);
+    assert!(
+        (first_x - 50.0).abs() < 2.0,
+        "First char x should be ~50, got {}",
+        first_x
+    );
 }
 
 #[test]
@@ -229,7 +237,10 @@ fn test_font_cache_with_page_fonts() {
     }
 
     // Verify the font cache contains F1
-    assert!(font_cache.get(b"F1").is_some(), "Font cache should contain F1");
+    assert!(
+        font_cache.get(b"F1").is_some(),
+        "Font cache should contain F1"
+    );
 
     let f1 = font_cache.get(b"F1").unwrap();
     assert_eq!(f1.subtype, FontSubtype::Type1);

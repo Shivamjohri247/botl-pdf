@@ -125,7 +125,10 @@ pub fn interpret_content_stream(
                     if let Some(name) = operands[0].as_name() {
                         state.font_name = Some(name.to_vec());
                     }
-                    state.font_size = operands[1].as_real().or_else(|| operands[1].as_integer().map(|i| i as f64)).unwrap_or(12.0);
+                    state.font_size = operands[1]
+                        .as_real()
+                        .or_else(|| operands[1].as_integer().map(|i| i as f64))
+                        .unwrap_or(12.0);
                 }
             }
             "Tc" => {
@@ -317,7 +320,8 @@ pub fn interpret_content_stream(
                                 &mut last_char_center_y,
                                 run_id,
                             );
-                        } else if let Some(kern) = item.as_real()
+                        } else if let Some(kern) = item
+                            .as_real()
                             .or_else(|| item.as_integer().map(|i| i as f64))
                         {
                             // Kern value: adjust text position by -kern/1000 * font_size
@@ -454,7 +458,11 @@ pub fn interpret_content_stream(
         }
     }
 
-    Ok(InterpretResult { chars, lines, rects })
+    Ok(InterpretResult {
+        chars,
+        lines,
+        rects,
+    })
 }
 
 /// Inject a synthetic space character if there's a gap between the last emitted
@@ -486,7 +494,10 @@ fn show_string(
     last_char_center_y: &mut Option<f64>,
     run_id: u32,
 ) {
-    let font = state.font_name.as_ref().and_then(|name| font_cache.get(name));
+    let font = state
+        .font_name
+        .as_ref()
+        .and_then(|name| font_cache.get(name));
 
     let mut i = 0;
     while i < data.len() {
@@ -542,14 +553,14 @@ fn show_string(
         let page_pos = state.ctm.transform_point(&text_pos);
 
         // Calculate glyph width for advancing text position
-        let raw_width = font
-            .map(|f| f.get_raw_width(code))
-            .unwrap_or(600.0);
+        let raw_width = font.map(|f| f.get_raw_width(code)).unwrap_or(600.0);
         let glyph_advance = (raw_width / 1000.0) * state.font_size;
         let scaling = state.horizontal_scaling / 100.0;
 
         // Transform width and height through text matrix for bbox
-        let (dx, dy) = state.text_matrix.transform_vector(glyph_advance, state.font_size);
+        let (dx, dy) = state
+            .text_matrix
+            .transform_vector(glyph_advance, state.font_size);
         let abs_dx = dx.abs();
         let abs_dy = dy.abs();
 
@@ -566,16 +577,18 @@ fn show_string(
         chars.push(Char {
             text: text_char.to_string(),
             bbox,
-            font_name: state.font_name.as_ref()
+            font_name: state
+                .font_name
+                .as_ref()
                 .and_then(|n| std::str::from_utf8(n).ok())
                 .unwrap_or("unknown")
                 .to_string(),
             font_size: state.font_size,
-            bold: false,    // TODO: detect from font flags
-            italic: false,  // TODO: detect from font flags
+            bold: false,   // TODO: detect from font flags
+            italic: false, // TODO: detect from font flags
             color: Some(state.fill_color),
             stroking_color: Some(state.stroke_color),
-            rotation: 0.0,  // TODO: calculate from text matrix
+            rotation: 0.0, // TODO: calculate from text matrix
             run_id,
         });
 
@@ -635,7 +648,9 @@ impl<'a> ContentStreamTokenizer<'a> {
 
     /// Parse the next operator and its operands.
     /// Returns None at end of input.
-    fn next_operator(&mut self) -> Result<Option<(Vec<crate::parser::objects::PdfObject>, String)>> {
+    fn next_operator(
+        &mut self,
+    ) -> Result<Option<(Vec<crate::parser::objects::PdfObject>, String)>> {
         use crate::parser::objects::PdfObject;
 
         let mut operands = Vec::new();
@@ -694,13 +709,17 @@ impl<'a> ContentStreamTokenizer<'a> {
                 let mut depth = 1;
                 let mut j = 1;
                 while j < bytes.len() && depth > 0 {
-                    if bytes[j] == b'[' { depth += 1; }
-                    else if bytes[j] == b']' { depth -= 1; }
-                    else if bytes[j] == b'(' {
+                    if bytes[j] == b'[' {
+                        depth += 1;
+                    } else if bytes[j] == b']' {
+                        depth -= 1;
+                    } else if bytes[j] == b'(' {
                         // Skip string contents
                         j += 1;
                         while j < bytes.len() && bytes[j] != b')' {
-                            if bytes[j] == b'\\' { j += 1; }
+                            if bytes[j] == b'\\' {
+                                j += 1;
+                            }
                             j += 1;
                         }
                     }
@@ -709,7 +728,8 @@ impl<'a> ContentStreamTokenizer<'a> {
                 let array_str = &remaining[..j];
                 self.pos += j;
                 // Parse array contents recursively using ObjectParser
-                let mut obj_parser = crate::parser::objects::ObjectParser::new(array_str.as_bytes());
+                let mut obj_parser =
+                    crate::parser::objects::ObjectParser::new(array_str.as_bytes());
                 if let Ok(obj) = obj_parser.parse_object() {
                     operands.push(obj);
                 }
@@ -729,7 +749,8 @@ impl<'a> ContentStreamTokenizer<'a> {
             }
 
             // Number (integer or real)
-            if bytes[0].is_ascii_digit() || bytes[0] == b'-' || bytes[0] == b'+' || bytes[0] == b'.' {
+            if bytes[0].is_ascii_digit() || bytes[0] == b'-' || bytes[0] == b'+' || bytes[0] == b'.'
+            {
                 let end = remaining
                     .find(|c: char| !c.is_ascii_digit() && c != '.' && c != '-' && c != '+')
                     .unwrap_or(remaining.len());
@@ -748,7 +769,11 @@ impl<'a> ContentStreamTokenizer<'a> {
             }
 
             // Operator keyword (alphabetic characters)
-            if bytes[0].is_ascii_alphabetic() || bytes[0] == b'*' || bytes[0] == b'\'' || bytes[0] == b'"' {
+            if bytes[0].is_ascii_alphabetic()
+                || bytes[0] == b'*'
+                || bytes[0] == b'\''
+                || bytes[0] == b'"'
+            {
                 let end = remaining
                     .find(|c: char| !c.is_ascii_alphabetic() && c != '*' && c != '\'' && c != '"')
                     .unwrap_or(remaining.len());

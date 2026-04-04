@@ -90,8 +90,9 @@ mod tests {
             0x00, // Aspect ratio units
             0x00, 0x01, // X density
             0x00, 0x01, // Y density
-            0x00, 0x00, // Thumbnail dimensions
-            // No actual image data — this should fail on decode
+            0x00,
+            0x00, // Thumbnail dimensions
+                  // No actual image data — this should fail on decode
         ];
         let result = decode_jpeg(&minimal);
         // Should fail because there's no image data, but parsing starts correctly

@@ -5,8 +5,12 @@
 use botl_pdf_core::geometry::BBox;
 use botl_pdf_core::layout::elements::{Char, TextBlock, TextLine, Word};
 use botl_pdf_core::layout::grouping::{chars_to_words, lines_to_blocks, words_to_lines};
-use botl_pdf_core::layout::ordering::{sort_blocks_reading_order, sort_lines_in_block, sort_words_in_line};
-use botl_pdf_core::layout::strategy::{analyze_layout, blocks_to_text, blocks_to_layout_text, LayoutParams};
+use botl_pdf_core::layout::ordering::{
+    sort_blocks_reading_order, sort_lines_in_block, sort_words_in_line,
+};
+use botl_pdf_core::layout::strategy::{
+    analyze_layout, blocks_to_layout_text, blocks_to_text, LayoutParams,
+};
 use botl_pdf_core::parser::document::Document;
 use botl_pdf_core::text::fonts::FontCache;
 use botl_pdf_core::text::operator::interpret_content_stream;
@@ -108,7 +112,11 @@ fn test_chars_to_words_break_on_font_change() {
     char2.font_name = "F2".to_string();
 
     let words = chars_to_words(&[char1, char2], 0.1);
-    assert_eq!(words.len(), 2, "Different fonts should create separate words");
+    assert_eq!(
+        words.len(),
+        2,
+        "Different fonts should create separate words"
+    );
 }
 
 #[test]
@@ -117,7 +125,11 @@ fn test_chars_to_words_break_on_font_size_change() {
     let char2 = make_char_with_size("B", 8.0, 0.0, 16.0, 24.0, 20.0);
 
     let words = chars_to_words(&[char1, char2], 0.1);
-    assert_eq!(words.len(), 2, "Large font size change should create separate words");
+    assert_eq!(
+        words.len(),
+        2,
+        "Large font size change should create separate words"
+    );
 }
 
 #[test]
@@ -127,7 +139,11 @@ fn test_chars_to_words_break_on_vertical_displacement() {
         make_char("B", 8.0, 30.0, 16.0, 42.0), // far below
     ];
     let words = chars_to_words(&chars, 0.1);
-    assert_eq!(words.len(), 2, "Vertical displacement should create separate words");
+    assert_eq!(
+        words.len(),
+        2,
+        "Vertical displacement should create separate words"
+    );
 }
 
 #[test]
@@ -141,7 +157,10 @@ fn test_chars_to_words_space_character_breaks() {
     // Space causes a word break when the NEXT char after space is processed.
     // The space itself is included in the preceding word: "A " and "B".
     assert_eq!(words.len(), 2, "Space should separate words");
-    assert!(words[0].text.starts_with("A"), "First word should start with A");
+    assert!(
+        words[0].text.starts_with("A"),
+        "First word should start with A"
+    );
     assert_eq!(words[1].text, "B");
 }
 
@@ -185,7 +204,11 @@ fn test_words_to_lines_two_lines() {
     let w2 = Word::from_chars(chars2).unwrap();
 
     let lines = words_to_lines(&[w1, w2]);
-    assert_eq!(lines.len(), 2, "Words at different y positions should form different lines");
+    assert_eq!(
+        lines.len(),
+        2,
+        "Words at different y positions should form different lines"
+    );
 }
 
 #[test]
@@ -256,7 +279,11 @@ fn test_lines_to_blocks_far_lines_different_blocks() {
 
     // gap = 38, threshold = 0.5 * 12 = 6, 38 > 6 so different blocks
     let blocks = lines_to_blocks(&[l1, l2], 0.5);
-    assert_eq!(blocks.len(), 2, "Far-apart lines should be in different blocks");
+    assert_eq!(
+        blocks.len(),
+        2,
+        "Far-apart lines should be in different blocks"
+    );
 }
 
 #[test]
@@ -279,7 +306,10 @@ fn test_analyze_layout_basic() {
     let blocks = analyze_layout(&chars, &params);
 
     assert!(!blocks.is_empty(), "Should produce at least one block");
-    assert!(blocks[0].text.contains("Hi"), "Block text should contain 'Hi'");
+    assert!(
+        blocks[0].text.contains("Hi"),
+        "Block text should contain 'Hi'"
+    );
 }
 
 #[test]
@@ -347,9 +377,7 @@ fn test_blocks_to_text() {
 
 #[test]
 fn test_blocks_to_layout_text() {
-    let chars = vec![
-        make_char("X", 0.0, 0.0, 8.0, 12.0),
-    ];
+    let chars = vec![make_char("X", 0.0, 0.0, 8.0, 12.0)];
     let params = LayoutParams::default();
     let blocks = analyze_layout(&chars, &params);
     let text = blocks_to_layout_text(&blocks, 612.0);

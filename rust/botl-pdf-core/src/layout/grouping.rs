@@ -26,8 +26,8 @@ pub fn chars_to_words(chars: &[Char], word_margin: f64) -> Vec<Word> {
         let threshold = word_margin * avg_font_size;
 
         // Break word on: font change, vertical displacement, or space
-        let font_changed = prev.font_name != curr.font_name
-            || (prev.font_size - curr.font_size).abs() > 0.5;
+        let font_changed =
+            prev.font_name != curr.font_name || (prev.font_size - curr.font_size).abs() > 0.5;
         let vertical_break = {
             let prev_center_y = prev.bbox.center().1;
             let curr_center_y = curr.bbox.center().1;

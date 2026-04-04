@@ -28,7 +28,9 @@ pub fn decode(data: &[u8]) -> Result<Vec<u8>> {
 
         if b == b'z' {
             if group_len != 0 {
-                return Err(BotlError::CodecError("'z' in middle of ASCII85 group".into()));
+                return Err(BotlError::CodecError(
+                    "'z' in middle of ASCII85 group".into(),
+                ));
             }
             output.extend_from_slice(&[0, 0, 0, 0]);
             i += 1;
@@ -36,7 +38,10 @@ pub fn decode(data: &[u8]) -> Result<Vec<u8>> {
         }
 
         if b < 33 || b > 117 {
-            return Err(BotlError::CodecError(format!("Invalid ASCII85 char: {}", b)));
+            return Err(BotlError::CodecError(format!(
+                "Invalid ASCII85 char: {}",
+                b
+            )));
         }
 
         group[group_len] = (b - 33) as u32;

@@ -7,11 +7,11 @@ mod errors;
 mod page;
 mod writer;
 
-use document::{PyDocument, open};
+use document::{open, PyDocument};
 use elements::{
-    PyBBox, PyChar, PyGeomLine, PyGeomRect, PyTextBlock, PyTextLine, PyTOCEntry, PyWord,
+    PyBBox, PyChar, PyGeomLine, PyGeomRect, PyTOCEntry, PyTextBlock, PyTextLine, PyWord,
 };
-use page::{PyPage, PyLayoutParams};
+use page::{PyLayoutParams, PyPage};
 use writer::PyWriter;
 
 /// botl-pdf internal native module.

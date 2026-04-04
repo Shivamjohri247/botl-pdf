@@ -38,7 +38,13 @@ impl LzwDecoder {
         let mut prev_code: Option<u16> = None;
 
         loop {
-            let code = self.read_bits(data, &mut byte_pos, &mut bit_buffer, &mut bits_in_buffer, code_size)?;
+            let code = self.read_bits(
+                data,
+                &mut byte_pos,
+                &mut bit_buffer,
+                &mut bits_in_buffer,
+                code_size,
+            )?;
 
             if code == eod_code {
                 break;
@@ -69,7 +75,8 @@ impl LzwDecoder {
                 return Err(BotlError::CodecError("Invalid LZW code".into()));
             };
 
-            let entry = entry.ok_or_else(|| BotlError::CodecError("LZW code not in table".into()))?;
+            let entry =
+                entry.ok_or_else(|| BotlError::CodecError("LZW code not in table".into()))?;
             output.extend_from_slice(&entry);
 
             if let Some(prev) = prev_code {

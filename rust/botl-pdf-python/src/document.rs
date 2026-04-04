@@ -55,9 +55,7 @@ impl PyDocument {
             let (width, height) = Self::extract_page_dimensions(&page_dict);
 
             // Rotate
-            let rotation = page_dict
-                .get_integer("Rotate")
-                .unwrap_or(0) as i32;
+            let rotation = page_dict.get_integer("Rotate").unwrap_or(0) as i32;
 
             // Label (default to 1-based index)
             let label = format!("{}", i + 1);
@@ -69,9 +67,7 @@ impl PyDocument {
         Ok(())
     }
 
-    fn extract_page_dimensions(
-        page_dict: &botl_pdf_core::parser::objects::PdfDict,
-    ) -> (f64, f64) {
+    fn extract_page_dimensions(page_dict: &botl_pdf_core::parser::objects::PdfDict) -> (f64, f64) {
         if let Some(arr) = page_dict.get_array("MediaBox") {
             if arr.len() >= 4 {
                 let x0 = arr[0].as_real().unwrap_or(0.0);
@@ -193,13 +189,11 @@ impl PyDocument {
         };
 
         let outlines_obj = doc.resolve(outlines_ref).into_py()?;
-        let outlines_dict = outlines_obj
-            .as_dict()
-            .ok_or_else(|| {
-                crate::errors::to_pyerr(botl_pdf_core::error::BotlError::ParseError(
-                    "Outlines is not a dict".into(),
-                ))
-            })?;
+        let outlines_dict = outlines_obj.as_dict().ok_or_else(|| {
+            crate::errors::to_pyerr(botl_pdf_core::error::BotlError::ParseError(
+                "Outlines is not a dict".into(),
+            ))
+        })?;
 
         // Get the First entry (first top-level outline item)
         let first_ref = match outlines_dict.get_reference("First") {
@@ -222,19 +216,14 @@ impl PyDocument {
     ) -> PyResult<()> {
         let mut doc_guard = doc.lock();
         let item_obj = doc_guard.resolve(item_ref).into_py()?;
-        let item_dict = item_obj
-            .as_dict()
-            .ok_or_else(|| {
-                crate::errors::to_pyerr(botl_pdf_core::error::BotlError::ParseError(
-                    "Outline item is not a dict".into(),
-                ))
-            })?;
+        let item_dict = item_obj.as_dict().ok_or_else(|| {
+            crate::errors::to_pyerr(botl_pdf_core::error::BotlError::ParseError(
+                "Outline item is not a dict".into(),
+            ))
+        })?;
 
         // Title
-        let title = item_dict
-            .get_string("Title")
-            .unwrap_or("")
-            .to_string();
+        let title = item_dict.get_string("Title").unwrap_or("").to_string();
 
         // Try to resolve destination to a page number
         let page_number = Self::resolve_outline_dest(&mut doc_guard, &item_dict);

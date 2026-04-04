@@ -35,24 +35,38 @@ pub fn sort_blocks_reading_order(blocks: &mut [TextBlock], boxes_flow: f64) {
         // If blocks are roughly at the same vertical position, sort by x
         let avg_height = (a.bbox.height() + b.bbox.height()) / 2.0;
         if y_diff.abs() < avg_height * 0.5 {
-            x_diff.partial_cmp(&0.0).unwrap_or(std::cmp::Ordering::Equal)
+            x_diff
+                .partial_cmp(&0.0)
+                .unwrap_or(std::cmp::Ordering::Equal)
         } else {
             // Weighted ordering based on boxes_flow
             let score_a = a.bbox.y0 + a.bbox.x0 * (1.0 - boxes_flow);
             let score_b = b.bbox.y0 + b.bbox.x0 * (1.0 - boxes_flow);
-            score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+            score_a
+                .partial_cmp(&score_b)
+                .unwrap_or(std::cmp::Ordering::Equal)
         }
     });
 }
 
 /// Sort words within a line by x position (left to right).
 pub fn sort_words_in_line(words: &mut [Word]) {
-    words.sort_by(|a, b| a.bbox.x0.partial_cmp(&b.bbox.x0).unwrap_or(std::cmp::Ordering::Equal));
+    words.sort_by(|a, b| {
+        a.bbox
+            .x0
+            .partial_cmp(&b.bbox.x0)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 }
 
 /// Sort lines within a block by y position (top to bottom).
 pub fn sort_lines_in_block(lines: &mut [TextLine]) {
-    lines.sort_by(|a, b| a.bbox.y0.partial_cmp(&b.bbox.y0).unwrap_or(std::cmp::Ordering::Equal));
+    lines.sort_by(|a, b| {
+        a.bbox
+            .y0
+            .partial_cmp(&b.bbox.y0)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 }
 
 /// Detect columns by analyzing horizontal positions of blocks.

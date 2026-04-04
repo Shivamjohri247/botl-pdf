@@ -281,10 +281,7 @@ fn maybe_de_interleave_runs(chars: &mut [Char]) {
     // Runs genuinely interleave — de-interleave by grouping by run_id.
     let mut run_groups: HashMap<u32, Vec<Char>> = HashMap::new();
     for ch in chars.iter() {
-        run_groups
-            .entry(ch.run_id)
-            .or_default()
-            .push(ch.clone());
+        run_groups.entry(ch.run_id).or_default().push(ch.clone());
     }
 
     // Sort each run's chars by x
@@ -453,7 +450,10 @@ mod tests {
 
         maybe_de_interleave_runs(&mut chars);
         let text: String = chars.iter().map(|c| c.text.as_str()).collect();
-        assert_eq!(text, "ABCD", "should keep runs together in run_id order when interleaved");
+        assert_eq!(
+            text, "ABCD",
+            "should keep runs together in run_id order when interleaved"
+        );
     }
 
     #[test]
@@ -484,11 +484,11 @@ mod tests {
         // Expected: "AB ECD" (run 1 first, then run 2, in content stream order)
         let mut chars = vec![
             make_char("A", 0.0, 0.0, 8.0, 12.0),   // run 1
-            make_char("B", 10.0, 0.0, 18.0, 12.0),  // run 1
-            make_char("C", 20.0, 0.0, 28.0, 12.0),  // run 2
-            make_char("D", 30.0, 0.0, 38.0, 12.0),  // run 2
-            make_char(" ", 40.0, 0.0, 44.0, 12.0),  // run 1
-            make_char("E", 50.0, 0.0, 58.0, 12.0),  // run 1
+            make_char("B", 10.0, 0.0, 18.0, 12.0), // run 1
+            make_char("C", 20.0, 0.0, 28.0, 12.0), // run 2
+            make_char("D", 30.0, 0.0, 38.0, 12.0), // run 2
+            make_char(" ", 40.0, 0.0, 44.0, 12.0), // run 1
+            make_char("E", 50.0, 0.0, 58.0, 12.0), // run 1
         ];
         chars[0].run_id = 1;
         chars[1].run_id = 1;

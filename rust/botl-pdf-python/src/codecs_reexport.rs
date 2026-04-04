@@ -1,5 +1,5 @@
-use botl_pdf_core::parser::objects::PdfStream;
 use crate::errors::IntoPyResult;
+use botl_pdf_core::parser::objects::PdfStream;
 
 /// Decode a PDF stream using the filters specified in its dictionary.
 ///

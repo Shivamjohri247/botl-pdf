@@ -31,7 +31,7 @@ pub fn win_ansi_to_unicode(byte: u8) -> char {
         0x9C => '\u{0153}', // Latin small ligature oe
         0x9E => '\u{017E}', // Latin small letter z with caron
         0x9F => '\u{0178}', // Latin capital letter Y with diaeresis
-        _ => byte as char,   // Direct mapping for everything else
+        _ => byte as char,  // Direct mapping for everything else
     }
 }
 

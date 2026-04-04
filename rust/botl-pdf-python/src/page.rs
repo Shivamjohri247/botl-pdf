@@ -3,7 +3,9 @@ use std::sync::Arc;
 use pyo3::prelude::*;
 
 use botl_pdf_core::layout::elements::{Char, GeomLine, GeomRect};
-use botl_pdf_core::layout::strategy::{analyze_layout, blocks_to_layout_text, blocks_to_text, LayoutParams};
+use botl_pdf_core::layout::strategy::{
+    analyze_layout, blocks_to_layout_text, blocks_to_text, LayoutParams,
+};
 use botl_pdf_core::parser::document::Document;
 use botl_pdf_core::parser::objects::PdfObject;
 use botl_pdf_core::text::cmap::CMap;
@@ -30,23 +32,35 @@ struct PageData {
 }
 
 impl PageData {
-    fn from_interpret_result(result: botl_pdf_core::text::operator::InterpretResult, width: f64, height: f64) -> Self {
+    fn from_interpret_result(
+        result: botl_pdf_core::text::operator::InterpretResult,
+        width: f64,
+        height: f64,
+    ) -> Self {
         // Convert LineElement -> GeomLine, RectElement -> GeomRect
-        let lines = result.lines.into_iter().map(|le| GeomLine {
-            x0: le.x0,
-            y0: le.y0,
-            x1: le.x1,
-            y1: le.y1,
-            line_width: le.line_width,
-            color: Some(le.color),
-        }).collect();
+        let lines = result
+            .lines
+            .into_iter()
+            .map(|le| GeomLine {
+                x0: le.x0,
+                y0: le.y0,
+                x1: le.x1,
+                y1: le.y1,
+                line_width: le.line_width,
+                color: Some(le.color),
+            })
+            .collect();
 
-        let rects = result.rects.into_iter().map(|re| GeomRect {
-            bbox: re.bbox,
-            line_width: re.line_width,
-            stroke_color: re.stroke_color,
-            fill_color: re.fill_color,
-        }).collect();
+        let rects = result
+            .rects
+            .into_iter()
+            .map(|re| GeomRect {
+                bbox: re.bbox,
+                line_width: re.line_width,
+                stroke_color: re.stroke_color,
+                fill_color: re.fill_color,
+            })
+            .collect();
 
         Self {
             chars: result.chars,
@@ -178,9 +192,15 @@ fn build_font_cache(
             Some(value.clone())
         };
 
-        let Some(font_obj) = font_dict_obj else { continue };
-        let Some(fd) = font_obj.as_dict() else { continue };
-        let Ok(mut font) = Font::from_dict(font_name_str, fd) else { continue };
+        let Some(font_obj) = font_dict_obj else {
+            continue;
+        };
+        let Some(fd) = font_obj.as_dict() else {
+            continue;
+        };
+        let Ok(mut font) = Font::from_dict(font_name_str, fd) else {
+            continue;
+        };
 
         // -- Resolve the ToUnicode CMap stream, if present -----------------
         if let Some(tu_ref) = font.to_unicode_ref {
@@ -277,7 +297,10 @@ fn get_content_stream(
     }
 }
 
-fn get_layout_params(layout: bool, layout_params: Option<&Bound<'_, PyAny>>) -> Option<LayoutParams> {
+fn get_layout_params(
+    layout: bool,
+    layout_params: Option<&Bound<'_, PyAny>>,
+) -> Option<LayoutParams> {
     if !layout && layout_params.is_none() {
         return None;
     }
@@ -332,7 +355,11 @@ impl PyLayoutParams {
     #[new]
     #[pyo3(signature = (word_margin=2.0, line_margin=0.5, boxes_flow=0.5))]
     fn new(word_margin: f64, line_margin: f64, boxes_flow: f64) -> Self {
-        Self { word_margin, line_margin, boxes_flow }
+        Self {
+            word_margin,
+            line_margin,
+            boxes_flow,
+        }
     }
 }
 
@@ -405,7 +432,8 @@ impl PyPage {
                     let (width, height) = extract_mediabox(&page_dict, default_w, default_h);
                     let font_cache = build_font_cache(&page_dict, &mut doc)?;
                     let content_data = get_content_stream(&page_dict, &mut doc)?;
-                    let result = interpret_content_stream(&content_data, &font_cache, height).into_py()?;
+                    let result =
+                        interpret_content_stream(&content_data, &font_cache, height).into_py()?;
                     let data = PageData::from_interpret_result(result, width, height);
 
                     {
@@ -447,17 +475,28 @@ impl PyPage {
     #[getter]
     fn lines(&self) -> PyResult<Vec<PyGeomLine>> {
         let data = self.ensure_extracted()?;
-        Ok(data.lines.iter().map(|l| PyGeomLine::new(l.clone())).collect())
+        Ok(data
+            .lines
+            .iter()
+            .map(|l| PyGeomLine::new(l.clone()))
+            .collect())
     }
 
     /// Geometric rectangles on the page.
     #[getter]
     fn rects(&self) -> PyResult<Vec<PyGeomRect>> {
         let data = self.ensure_extracted()?;
-        Ok(data.rects.iter().map(|r| PyGeomRect::new(r.clone())).collect())
+        Ok(data
+            .rects
+            .iter()
+            .map(|r| PyGeomRect::new(r.clone()))
+            .collect())
     }
 
     fn __repr__(&self) -> String {
-        format!("Page({}, width={:.1}, height={:.1})", self.page_number, self.width, self.height)
+        format!(
+            "Page({}, width={:.1}, height={:.1})",
+            self.page_number, self.width, self.height
+        )
     }
 }

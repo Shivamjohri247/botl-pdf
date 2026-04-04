@@ -336,7 +336,10 @@ impl<'a> ObjectParser<'a> {
         match tok2 {
             lexer::Token::Name(ref n) if n == b"R" => {
                 self.pos = self.input.len() - r2.len();
-                Ok(PdfObject::Reference(ObjRef::new(obj_num as u32, gen_num as u16)))
+                Ok(PdfObject::Reference(ObjRef::new(
+                    obj_num as u32,
+                    gen_num as u16,
+                )))
             }
             _ => Err(BotlError::ParseError("Not a reference".into())),
         }
@@ -372,7 +375,12 @@ impl<'a> ObjectParser<'a> {
     ) -> Result<PdfStream> {
         let stream_kw_end = remaining.len() - skipped.len() + 6;
         let data_start = if stream_kw_end < remaining.len() && remaining[stream_kw_end] == b'\r' {
-            stream_kw_end + if stream_kw_end + 1 < remaining.len() && remaining[stream_kw_end + 1] == b'\n' { 2 } else { 1 }
+            stream_kw_end
+                + if stream_kw_end + 1 < remaining.len() && remaining[stream_kw_end + 1] == b'\n' {
+                    2
+                } else {
+                    1
+                }
         } else if stream_kw_end < remaining.len() && remaining[stream_kw_end] == b'\n' {
             stream_kw_end + 1
         } else {
@@ -382,17 +390,18 @@ impl<'a> ObjectParser<'a> {
         let declared_length = dict.get_integer("Length").unwrap_or(0) as usize;
         let abs_data_start = self.pos + data_start;
 
-        let (data_end, abs_end) = if declared_length > 0 && abs_data_start + declared_length <= self.input.len() {
-            let candidate_end = abs_data_start + declared_length;
-            let after = lexer::skip_ws(&self.input[candidate_end..]);
-            if after.starts_with(b"endstream") {
-                (candidate_end, self.input.len() - after.len() + 9)
+        let (data_end, abs_end) =
+            if declared_length > 0 && abs_data_start + declared_length <= self.input.len() {
+                let candidate_end = abs_data_start + declared_length;
+                let after = lexer::skip_ws(&self.input[candidate_end..]);
+                if after.starts_with(b"endstream") {
+                    (candidate_end, self.input.len() - after.len() + 9)
+                } else {
+                    self.find_endstream(abs_data_start)?
+                }
             } else {
                 self.find_endstream(abs_data_start)?
-            }
-        } else {
-            self.find_endstream(abs_data_start)?
-        };
+            };
 
         let data = self.input[abs_data_start..data_end].to_vec();
         self.pos = abs_end;
@@ -498,7 +507,10 @@ mod tests {
         let indirect = parser.parse_indirect_object().unwrap();
         assert_eq!(indirect.obj_num, 1);
         assert_eq!(indirect.gen_num, 0);
-        assert_eq!(indirect.object.as_dict().unwrap().get_name("Type"), Some("Catalog"));
+        assert_eq!(
+            indirect.object.as_dict().unwrap().get_name("Type"),
+            Some("Catalog")
+        );
     }
 
     #[test]
@@ -528,56 +540,59 @@ mod tests {
     }
 }
 
-    #[test]
-    fn test_debug_nested_dicts() {
-        // Start simpler and build up
-        // Level 1: just << /C 42 >>
-        let input = b"<< /C 42 >>";
-        let mut parser = ObjectParser::new(input);
-        let obj = parser.parse_object().unwrap();
-        assert!(obj.as_dict().is_some(), "Level 1 failed");
-        
-        // Level 2: << /B << /C 42 >> >>
-        let input = b"<< /B << /C 42 >> >>";
-        let mut parser = ObjectParser::new(input);
-        let obj = parser.parse_object().unwrap();
-        assert!(obj.as_dict().is_some(), "Level 2 with spaces failed");
-        
-        // Level 2 no spaces: << /B<</C 42>>>>>
-        let input = b"<< /B<</C 42>>>>";
-        let mut parser = ObjectParser::new(input);
-        let obj = parser.parse_object().unwrap();
-        assert!(obj.as_dict().is_some(), "Level 2 no spaces failed");
-        
-        // Level 3: << /A << /B << /C 42 >> >> >>
-        let input = b"<< /A << /B << /C 42 >> >> >>";
-        let mut parser = ObjectParser::new(input);
-        let obj = parser.parse_object().unwrap();
-        assert!(obj.as_dict().is_some(), "Level 3 with spaces failed");
-        
-        // Level 3 no spaces: << /A<< /B<< /C 42 >>>>>>>
-        let input = b"<< /A<< /B<< /C 42 >>>>>>";
-        let mut parser = ObjectParser::new(input);
-        let obj = parser.parse_object();
-        match &obj {
-            Ok(_) => {},
-            Err(e) => panic!("Level 3 no spaces failed: {:?}", e),
-        }
-    }
+#[test]
+fn test_debug_nested_dicts() {
+    // Start simpler and build up
+    // Level 1: just << /C 42 >>
+    let input = b"<< /C 42 >>";
+    let mut parser = ObjectParser::new(input);
+    let obj = parser.parse_object().unwrap();
+    assert!(obj.as_dict().is_some(), "Level 1 failed");
 
-    #[test]
-    fn test_level2_no_spaces_minimal() {
-        let input = b"<< /B<</C 42>>>>";
-        eprintln!("Input: {:?}", String::from_utf8_lossy(input));
-        eprintln!("Input len: {}", input.len());
-        let mut parser = ObjectParser::new(input);
-        let obj = parser.parse_object();
-        match &obj {
-            Ok(_) => {},
-            Err(e) => {
-                eprintln!("FAILED at pos {}:", parser.pos);
-                eprintln!("Remaining: {:?}", String::from_utf8_lossy(&input[parser.pos.min(input.len())..]));
-                panic!("Failed: {:?}", e);
-            }
+    // Level 2: << /B << /C 42 >> >>
+    let input = b"<< /B << /C 42 >> >>";
+    let mut parser = ObjectParser::new(input);
+    let obj = parser.parse_object().unwrap();
+    assert!(obj.as_dict().is_some(), "Level 2 with spaces failed");
+
+    // Level 2 no spaces: << /B<</C 42>>>>>
+    let input = b"<< /B<</C 42>>>>";
+    let mut parser = ObjectParser::new(input);
+    let obj = parser.parse_object().unwrap();
+    assert!(obj.as_dict().is_some(), "Level 2 no spaces failed");
+
+    // Level 3: << /A << /B << /C 42 >> >> >>
+    let input = b"<< /A << /B << /C 42 >> >> >>";
+    let mut parser = ObjectParser::new(input);
+    let obj = parser.parse_object().unwrap();
+    assert!(obj.as_dict().is_some(), "Level 3 with spaces failed");
+
+    // Level 3 no spaces: << /A<< /B<< /C 42 >>>>>>>
+    let input = b"<< /A<< /B<< /C 42 >>>>>>";
+    let mut parser = ObjectParser::new(input);
+    let obj = parser.parse_object();
+    match &obj {
+        Ok(_) => {}
+        Err(e) => panic!("Level 3 no spaces failed: {:?}", e),
+    }
+}
+
+#[test]
+fn test_level2_no_spaces_minimal() {
+    let input = b"<< /B<</C 42>>>>";
+    eprintln!("Input: {:?}", String::from_utf8_lossy(input));
+    eprintln!("Input len: {}", input.len());
+    let mut parser = ObjectParser::new(input);
+    let obj = parser.parse_object();
+    match &obj {
+        Ok(_) => {}
+        Err(e) => {
+            eprintln!("FAILED at pos {}:", parser.pos);
+            eprintln!(
+                "Remaining: {:?}",
+                String::from_utf8_lossy(&input[parser.pos.min(input.len())..])
+            );
+            panic!("Failed: {:?}", e);
         }
     }
+}

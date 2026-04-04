@@ -38,7 +38,9 @@ impl Matrix {
         if vals.len() != 6 {
             return None;
         }
-        Some(Self::new(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]))
+        Some(Self::new(
+            vals[0], vals[1], vals[2], vals[3], vals[4], vals[5],
+        ))
     }
 
     /// Matrix multiplication: self * other.

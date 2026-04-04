@@ -40,10 +40,7 @@ impl BBox {
 
     /// Returns true if this bbox fully contains `other`.
     pub fn contains(&self, other: &BBox) -> bool {
-        self.x0 <= other.x0
-            && self.y0 <= other.y0
-            && self.x1 >= other.x1
-            && self.y1 >= other.y1
+        self.x0 <= other.x0 && self.y0 <= other.y0 && self.x1 >= other.x1 && self.y1 >= other.y1
     }
 
     /// Returns true if this bbox overlaps with `other`.

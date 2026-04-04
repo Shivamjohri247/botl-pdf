@@ -18,7 +18,12 @@ pub fn decode(data: &[u8]) -> Result<Vec<u8>> {
             b'a'..=b'f' => b - b'a' + 10,
             b'A'..=b'F' => b - b'A' + 10,
             b' ' | b'\t' | b'\r' | b'\n' | b'\x0c' => continue,
-            _ => return Err(BotlError::CodecError(format!("Invalid hex char: '{}'", b as char))),
+            _ => {
+                return Err(BotlError::CodecError(format!(
+                    "Invalid hex char: '{}'",
+                    b as char
+                )))
+            }
         };
 
         match high_nibble {

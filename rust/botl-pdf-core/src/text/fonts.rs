@@ -32,7 +32,7 @@ pub struct Font {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FontSubtype {
     Type1,
-    Type1C,  // Type1C (CFF)
+    Type1C, // Type1C (CFF)
     TrueType,
     Type0,
     CIDFontType0,
@@ -119,9 +119,7 @@ impl Font {
     /// Dictionary forms of the /Encoding entry.
     fn extract_encoding_name(dict: &PdfDict) -> Option<String> {
         match dict.get_str("Encoding") {
-            Some(PdfObject::Name(n)) => {
-                std::str::from_utf8(n).ok().map(String::from)
-            }
+            Some(PdfObject::Name(n)) => std::str::from_utf8(n).ok().map(String::from),
             Some(PdfObject::Reference(_)) => {
                 // Encoding is an indirect reference; we cannot resolve it here.
                 // The caller should resolve and set the encoding name later.
@@ -139,9 +137,7 @@ impl Font {
                     None
                 }
             }
-            Some(PdfObject::String(s)) => {
-                std::str::from_utf8(s).ok().map(String::from)
-            }
+            Some(PdfObject::String(s)) => std::str::from_utf8(s).ok().map(String::from),
             _ => None,
         }
     }
@@ -193,7 +189,8 @@ impl Font {
                     if let Some(arr) = w_array[i + 1].as_array() {
                         // c [w1 w2 ...]: consecutive widths starting at c
                         for (j, w) in arr.iter().enumerate() {
-                            let width = w.as_real()
+                            let width = w
+                                .as_real()
                                 .or_else(|| w.as_integer().map(|v| v as f64))
                                 .unwrap_or(self.default_width);
                             self.widths.insert(c + j as u32, width);
@@ -229,7 +226,11 @@ impl Font {
     /// Get the width of a glyph in text space units.
     /// Returns the width scaled by the current font size and CTM.
     pub fn get_glyph_width(&self, char_code: u32, font_size: f64, ctm: &Matrix) -> f64 {
-        let raw_width = self.widths.get(&char_code).copied().unwrap_or(self.default_width);
+        let raw_width = self
+            .widths
+            .get(&char_code)
+            .copied()
+            .unwrap_or(self.default_width);
         // Width is in glyph units (typically 1/1000 of text space)
         let text_width = (raw_width / 1000.0) * font_size;
         // Apply horizontal scaling from CTM
@@ -239,7 +240,10 @@ impl Font {
 
     /// Get the raw width in glyph space units (unscaled).
     pub fn get_raw_width(&self, char_code: u32) -> f64 {
-        self.widths.get(&char_code).copied().unwrap_or(self.default_width)
+        self.widths
+            .get(&char_code)
+            .copied()
+            .unwrap_or(self.default_width)
     }
 
     pub fn set_size(&mut self, size: f64) {
@@ -337,8 +341,14 @@ mod tests {
     fn test_type0_font_encoding_from_descendant() {
         // Type0 font with DescendantFonts containing CIDFont with Encoding
         let mut descendant = PdfDict::new();
-        descendant.insert(b"Subtype".to_vec(), PdfObject::Name(b"CIDFontType2".to_vec()));
-        descendant.insert(b"Encoding".to_vec(), PdfObject::Name(b"Identity-H".to_vec()));
+        descendant.insert(
+            b"Subtype".to_vec(),
+            PdfObject::Name(b"CIDFontType2".to_vec()),
+        );
+        descendant.insert(
+            b"Encoding".to_vec(),
+            PdfObject::Name(b"Identity-H".to_vec()),
+        );
 
         let mut dict = PdfDict::new();
         dict.insert(b"Subtype".to_vec(), PdfObject::Name(b"Type0".to_vec()));
@@ -357,7 +367,10 @@ mod tests {
     fn test_encoding_as_dict() {
         // Font where Encoding is a dict with BaseEncoding
         let mut enc_dict = PdfDict::new();
-        enc_dict.insert(b"BaseEncoding".to_vec(), PdfObject::Name(b"WinAnsiEncoding".to_vec()));
+        enc_dict.insert(
+            b"BaseEncoding".to_vec(),
+            PdfObject::Name(b"WinAnsiEncoding".to_vec()),
+        );
 
         let mut dict = PdfDict::new();
         dict.insert(b"Subtype".to_vec(), PdfObject::Name(b"Type1".to_vec()));
@@ -372,9 +385,7 @@ mod tests {
         let mut font = Font::new("F1");
         assert!(font.cmap().is_none());
 
-        let cmap = CMap::parse(
-            b"1 beginbfchar\n<41> <0041>\nendbfchar\n"
-        ).unwrap();
+        let cmap = CMap::parse(b"1 beginbfchar\n<41> <0041>\nendbfchar\n").unwrap();
         font.set_cmap(cmap);
         assert!(font.cmap().is_some());
         assert_eq!(font.cmap().unwrap().to_char(0x41), Some('A'));

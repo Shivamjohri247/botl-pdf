@@ -2,8 +2,8 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
-    combinator::{map, opt, value, verify},
-    error::{ErrorKind, ParseError},
+    combinator::{map, opt},
+    error::ErrorKind,
     IResult,
 };
 
@@ -198,7 +198,7 @@ pub fn parse_literal_string(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
                     b'(' => b'(',
                     b')' => b')',
                     b'\\' => b'\\',
-                    c if c >= b'0' && c <= b'7' => {
+                    c if (b'0'..=b'7').contains(&c) => {
                         let mut val = (c - b'0') as u32;
                         let mut j = i + 2;
                         for _ in 0..2 {
@@ -475,7 +475,9 @@ mod tests {
     #[test]
     fn test_real() {
         let (rest, val) = parse_real(b"3.14 rest").unwrap();
-        assert!((val - 3.14).abs() < f64::EPSILON);
+        #[allow(clippy::approx_constant)]
+        let expected = 3.14;
+        assert!((val - expected).abs() < f64::EPSILON);
         assert_eq!(rest, b" rest");
 
         let (rest, val) = parse_real(b"-0.5 rest").unwrap();

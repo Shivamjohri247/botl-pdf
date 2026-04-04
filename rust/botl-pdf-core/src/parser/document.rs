@@ -1,5 +1,5 @@
 use crate::error::{BotlError, Result};
-use crate::parser::objects::{IndirectObject, ObjRef, ObjectParser, PdfDict, PdfObject, PdfStream};
+use crate::parser::objects::{ObjRef, ObjectParser, PdfDict, PdfObject, PdfStream};
 use crate::parser::xref::{parse_xref_from_data, XrefEntry, XrefTable};
 use hashbrown::HashMap;
 use std::path::Path;
@@ -35,7 +35,7 @@ impl Document {
         }
 
         let xref = parse_xref_from_data(&data)?;
-        let mut doc = Self {
+        let doc = Self {
             data,
             xref,
             object_cache: HashMap::new(),
@@ -69,11 +69,10 @@ impl Document {
             return Ok(obj.clone());
         }
 
-        let entry = self
+        let entry = *self
             .xref
             .get(reference.obj_num)
-            .ok_or_else(|| BotlError::InvalidReference(reference.obj_num, reference.gen_num))?
-            .clone();
+            .ok_or(BotlError::InvalidReference(reference.obj_num, reference.gen_num))?;
 
         let object = match entry {
             XrefEntry::InUse { offset, .. } => {
@@ -177,6 +176,7 @@ impl Document {
     }
 
     /// Get the page tree node.
+    #[allow(dead_code)]
     fn get_pages_tree(&mut self) -> Result<PdfDict> {
         let catalog = self.catalog()?;
         let pages_ref = catalog
@@ -303,6 +303,7 @@ impl Document {
         Ok(())
     }
 
+    #[allow(dead_code)]
     fn find_page(
         &mut self,
         node_ref: ObjRef,

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::layout::elements::{Char, TextBlock, TextLine, Word};
+use crate::layout::elements::{Char, TextBlock};
 use crate::layout::grouping;
 use crate::layout::ordering;
 
@@ -36,7 +36,7 @@ impl Default for LayoutParams {
 /// 3. Within each line:
 ///    a. Detect if runs interleave (chars from different runs alternate in x).
 ///    b. If runs interleave: group chars by run_id, sort each run by x,
-///       then order runs by their first char's x position (de-interleave).
+///    then order runs by their first char's x position (de-interleave).
 ///    c. If runs don't interleave: keep simple x-sort (already correct).
 ///
 /// This correctly handles both:
@@ -77,9 +77,9 @@ fn sort_chars_into_reading_order(chars: &mut [Char]) {
     let mut ref_y1 = chars[0].bbox.y1;
     let mut ref_height = ref_y1 - ref_y0;
 
-    for i in 1..n {
-        let ch_y0 = chars[i].bbox.y0;
-        let ch_y1 = chars[i].bbox.y1;
+    for (i, ch) in chars.iter().enumerate().skip(1) {
+        let ch_y0 = ch.bbox.y0;
+        let ch_y1 = ch.bbox.y1;
         let ch_height = ch_y1 - ch_y0;
 
         // Check vertical overlap with the reference (first char's) y-range
@@ -211,8 +211,7 @@ fn sub_group_by_y_and_sort(chars: &mut Vec<Char>) {
     let mut ref_center_y = (chars[0].bbox.y0 + chars[0].bbox.y1) / 2.0;
     let mut ref_height = chars[0].bbox.height();
 
-    for i in 1..chars.len() {
-        let ch = &chars[i];
+    for ch in chars.iter().skip(1) {
         let ch_center_y = (ch.bbox.y0 + ch.bbox.y1) / 2.0;
         let tolerance = ref_height * 0.5;
 
@@ -343,7 +342,7 @@ pub fn blocks_to_text(blocks: &[TextBlock]) -> String {
 
 /// Extract text with layout-preserving whitespace.
 /// Attempts to maintain spatial positioning using spaces and newlines.
-pub fn blocks_to_layout_text(blocks: &[TextBlock], page_width: f64) -> String {
+pub fn blocks_to_layout_text(blocks: &[TextBlock], _page_width: f64) -> String {
     let mut result = String::new();
 
     for (i, block) in blocks.iter().enumerate() {

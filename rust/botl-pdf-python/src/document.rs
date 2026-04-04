@@ -112,7 +112,7 @@ impl PyDocument {
     /// Number of pages in the document.
     #[getter]
     fn num_pages(&mut self) -> PyResult<usize> {
-        Ok(self.doc.lock().num_pages().into_py()?)
+        self.doc.lock().num_pages().into_py()
     }
 
     /// Whether the document is encrypted.
@@ -226,7 +226,7 @@ impl PyDocument {
         let title = item_dict.get_string("Title").unwrap_or("").to_string();
 
         // Try to resolve destination to a page number
-        let page_number = Self::resolve_outline_dest(&mut doc_guard, &item_dict);
+        let page_number = Self::resolve_outline_dest(&mut doc_guard, item_dict);
 
         entries.push(PyTOCEntry::new(title, level, page_number));
 

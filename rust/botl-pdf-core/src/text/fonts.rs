@@ -128,14 +128,7 @@ impl Font {
             Some(PdfObject::Dictionary(enc_dict)) => {
                 // Encoding dict: look for /BaseEncoding name.
                 // If present, use that. Otherwise /Type may indicate the kind.
-                if let Some(base) = enc_dict.get_name("BaseEncoding") {
-                    Some(base.to_string())
-                } else {
-                    // Encoding dict without BaseEncoding: typically means custom
-                    // differences from the built-in encoding. Report as None
-                    // so that the default encoding path is used.
-                    None
-                }
+                enc_dict.get_name("BaseEncoding").map(|base| base.to_string())
             }
             Some(PdfObject::String(s)) => std::str::from_utf8(s).ok().map(String::from),
             _ => None,

@@ -13,7 +13,7 @@ pub fn decode(data: &[u8]) -> Result<Vec<u8>> {
             break; // EOD
         }
 
-        if length_byte >= 0 && length_byte <= 127 {
+        if (0..=127).contains(&length_byte) {
             let count = (length_byte + 1) as usize;
             if i + count > data.len() {
                 return Err(BotlError::CodecError(
@@ -23,7 +23,7 @@ pub fn decode(data: &[u8]) -> Result<Vec<u8>> {
             output.extend_from_slice(&data[i..i + count]);
             i += count;
         } else if length_byte >= 129 {
-            let count = (257 - length_byte as i16) as usize;
+            let count = (257 - length_byte) as usize;
             if i >= data.len() {
                 return Err(BotlError::CodecError(
                     "Unexpected end of RunLength data".into(),

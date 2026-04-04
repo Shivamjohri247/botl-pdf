@@ -1,4 +1,3 @@
-use crate::geometry::BBox;
 use crate::layout::elements::{Char, TextBlock, TextLine, Word};
 
 /// Group characters into words based on spatial proximity.
@@ -93,8 +92,7 @@ pub fn words_to_lines(words: &[Word]) -> Vec<TextLine> {
     let mut line_y0 = words[0].bbox.y0;
     let mut line_y1 = words[0].bbox.y1;
 
-    for i in 1..words.len() {
-        let curr = &words[i];
+    for curr in words.iter().skip(1) {
 
         // Check vertical overlap with current line
         let overlap_top = line_y0.max(curr.bbox.y0);

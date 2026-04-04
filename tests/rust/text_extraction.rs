@@ -155,7 +155,7 @@ fn test_extract_text_from_simple_text_pdf() {
     let stream = stream_obj.as_stream().unwrap();
 
     // Decode the content stream
-    let decoded = botl_pdf_core::codecs::decode_stream_data(&stream).unwrap();
+    let decoded = botl_pdf_core::codecs::decode_stream_data(stream).unwrap();
 
     // Interpret the content stream
     let font_cache = FontCache::new();
@@ -194,7 +194,7 @@ fn test_extract_text_from_multi_page_pdf() {
     let stream_obj = doc.resolve(contents_ref).unwrap();
     let stream = stream_obj.as_stream().unwrap();
 
-    let decoded = botl_pdf_core::codecs::decode_stream_data(&stream).unwrap();
+    let decoded = botl_pdf_core::codecs::decode_stream_data(stream).unwrap();
     let font_cache = FontCache::new();
     let result = interpret_content_stream(&decoded, &font_cache, 792.0).unwrap();
 
@@ -311,7 +311,7 @@ fn test_extract_text_from_flate_compressed_pdf() {
     // Verify it uses FlateDecode
     assert!(stream.filter().is_some());
 
-    let decoded = botl_pdf_core::codecs::decode_stream_data(&stream).unwrap();
+    let decoded = botl_pdf_core::codecs::decode_stream_data(stream).unwrap();
     let font_cache = FontCache::new();
     let result = interpret_content_stream(&decoded, &font_cache, 792.0).unwrap();
 

@@ -149,7 +149,7 @@ fn parse_j2k_codestream(data: &[u8]) -> Result<DecodedImage, JpxError> {
 
 /// Decompress JPEG2000 data using OpenJPEG library.
 #[cfg(feature = "openjpeg")]
-fn decode_with_openjpeg(data: &[u8]) -> Result<DecodedImage, JpxError> {
+fn decode_with_openjpeg(_data: &[u8]) -> Result<DecodedImage, JpxError> {
     // When the openjpeg feature is enabled, this would use openjpeg-sys
     // to decompress the image. For now, the feature flag itself is the gate.
     //

@@ -465,7 +465,7 @@ fn test_flate_compressed_content_stream() {
     let stream = stream_obj.as_stream().unwrap();
 
     // Decode the FlateDecode stream
-    let decoded = botl_pdf_core::codecs::decode_stream_data(&stream);
+    let decoded = botl_pdf_core::codecs::decode_stream_data(stream);
     assert!(decoded.is_ok(), "Should decode FlateDecode stream");
 
     let decoded_text = decoded.unwrap();

@@ -479,7 +479,7 @@ fn test_layout_pipeline_on_simple_text_pdf() {
     let contents_ref = page.get_reference("Contents").unwrap();
     let stream_obj = doc.resolve(contents_ref).unwrap();
     let stream = stream_obj.as_stream().unwrap();
-    let decoded = botl_pdf_core::codecs::decode_stream_data(&stream).unwrap();
+    let decoded = botl_pdf_core::codecs::decode_stream_data(stream).unwrap();
 
     // Interpret the content stream to extract characters
     let font_cache = FontCache::new();

@@ -1,5 +1,3 @@
-use hashbrown::HashMap;
-
 /// Map a byte value through WinAnsiEncoding (Windows code page 1252) to Unicode.
 pub fn win_ansi_to_unicode(byte: u8) -> char {
     // Bytes 0x80-0x9F differ from Unicode; 0x00-0x7F and 0xA0-0xFF map directly.

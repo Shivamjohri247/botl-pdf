@@ -4,7 +4,6 @@ use crate::layout::elements::{TextBlock, TextLine, Word};
 ///
 /// Sorts blocks into reading order: top-to-bottom within columns,
 /// left-to-right across columns.
-
 /// Sort text blocks into reading order.
 /// Uses a simple top-down, left-to-right sort with column detection.
 pub fn sort_blocks_reading_order(blocks: &mut [TextBlock], boxes_flow: f64) {
@@ -21,8 +20,7 @@ pub fn sort_blocks_reading_order(blocks: &mut [TextBlock], boxes_flow: f64) {
     let columns = detect_columns(blocks, boxes_flow);
 
     // Sort within each column top-to-bottom
-    for col_blocks in &columns {
-        let indices = col_blocks;
+    for _col_blocks in &columns {
         // Already sorted by y within column
     }
 

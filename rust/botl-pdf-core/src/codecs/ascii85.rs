@@ -37,7 +37,7 @@ pub fn decode(data: &[u8]) -> Result<Vec<u8>> {
             continue;
         }
 
-        if b < 33 || b > 117 {
+        if !(33..=117).contains(&b) {
             return Err(BotlError::CodecError(format!(
                 "Invalid ASCII85 char: {}",
                 b

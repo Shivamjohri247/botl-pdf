@@ -484,6 +484,7 @@ fn maybe_inject_space(
 }
 
 /// Show a text string, producing positioned Char elements.
+#[allow(clippy::too_many_arguments)]
 fn show_string(
     data: &[u8],
     state: &mut GraphicsState,
@@ -674,7 +675,7 @@ impl<'a> ContentStreamTokenizer<'a> {
 
             // Comment
             if bytes[0] == b'%' {
-                if let Some(newline_pos) = remaining.find(|c| c == '\r' || c == '\n') {
+                if let Some(newline_pos) = remaining.find(['\r', '\n']) {
                     self.pos += newline_pos + 1;
                 } else {
                     self.pos = self.input.len();
@@ -760,10 +761,8 @@ impl<'a> ContentStreamTokenizer<'a> {
                     if let Ok(f) = num_str.parse::<f64>() {
                         operands.push(PdfObject::Real(f));
                     }
-                } else {
-                    if let Ok(i) = num_str.parse::<i64>() {
-                        operands.push(PdfObject::Integer(i));
-                    }
+                } else if let Ok(i) = num_str.parse::<i64>() {
+                    operands.push(PdfObject::Integer(i));
                 }
                 continue;
             }

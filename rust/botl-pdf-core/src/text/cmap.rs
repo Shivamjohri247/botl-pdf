@@ -84,7 +84,7 @@ impl CMap {
 
     /// Map a character code to a Unicode char.
     pub fn to_char(&self, code: u32) -> Option<char> {
-        self.to_unicode(code).and_then(|u| char::from_u32(u))
+        self.to_unicode(code).and_then(char::from_u32)
     }
 
     /// Decode a sequence of bytes using this CMap.

@@ -50,6 +50,10 @@ impl XrefTable {
         self.entries.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
     /// Get the root catalog reference from the trailer.
     pub fn root(&self) -> Option<ObjRef> {
         self.trailer.get_reference("Root")
@@ -98,7 +102,7 @@ pub fn parse_xref_table(data: &[u8]) -> Result<XrefTable> {
     }
 
     let mut entries = hashbrown::HashMap::new();
-    let mut trailer = PdfDict::new();
+    let trailer;
 
     loop {
         let remaining = &data[pos..];
@@ -115,7 +119,6 @@ pub fn parse_xref_table(data: &[u8]) -> Result<XrefTable> {
             trailer = trailer_obj
                 .into_dict()
                 .ok_or_else(|| BotlError::XrefError("Expected dictionary for trailer".into()))?;
-            pos += obj_parser.pos;
             break;
         }
 

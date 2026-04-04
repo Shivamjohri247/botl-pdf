@@ -53,16 +53,13 @@ pub fn find_all_xref_sections(data: &[u8]) -> Result<Vec<XrefTable>> {
 /// Merge all xref sections into a single table.
 /// Later sections override earlier ones (incremental update semantics).
 pub fn merge_xref_sections(sections: Vec<XrefTable>) -> XrefTable {
-    let mut merged = if let Some(first) = sections.into_iter().next() {
+    if let Some(first) = sections.into_iter().next() {
+        // The first section is the latest (most recent) update.
+        // We don't need to merge earlier sections since the latest one
+        // already has the correct entries for updated objects.
+        // However, earlier sections may contain objects not in the latest one.
         first
     } else {
-        return XrefTable::new(crate::parser::objects::PdfDict::new());
-    };
-
-    // The first section is the latest (most recent) update.
-    // We don't need to merge earlier sections since the latest one
-    // already has the correct entries for updated objects.
-    // However, earlier sections may contain objects not in the latest one.
-
-    merged
+        XrefTable::new(crate::parser::objects::PdfDict::new())
+    }
 }

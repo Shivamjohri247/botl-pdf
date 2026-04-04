@@ -1,0 +1,51 @@
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+*.so
+*.dylib
+*.dSYM/
+
+# Virtual environments
+.venv/
+venv/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Benchmarks
+benchmarks/results/
+
+# Claude Code
+.claude/
+
+# Large/copyrighted test fixtures (generated ones are fine)
+tests/fixtures/_OceanofPDF*
+tests/fixtures/botl_output.txt
+tests/fixtures/pymu_output.txt

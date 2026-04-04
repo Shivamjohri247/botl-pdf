@@ -1,0 +1,47 @@
+[package]
+name = "botl-pdf-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "High-performance PDF parsing, text extraction, and layout analysis"
+categories = ["parser-implementations", "text-processing"]
+keywords = ["pdf", "text-extraction", "layout", "tables"]
+
+[dependencies]
+nom = { workspace = true }
+flate2 = { version = "1", default-features = true }
+ring = { workspace = true }
+encoding_rs = { workspace = true }
+hashbrown = { workspace = true }
+smallvec = { workspace = true }
+bumpalo = { workspace = true }
+rstar = { workspace = true }
+memmap2 = { workspace = true }
+thiserror = { workspace = true }
+
+botl-pdf-csys = { path = "../botl-pdf-csys", optional = true }
+
+[features]
+default = ["c-codecs"]
+c-codecs = ["dep:botl-pdf-csys"]
+pure-rust-codecs = []
+
+[dev-dependencies]
+proptest = "1"
+
+[[test]]
+name = "parser_integration"
+path = "../../tests/rust/parser_integration.rs"
+
+[[test]]
+name = "text_extraction"
+path = "../../tests/rust/text_extraction.rs"
+
+[[test]]
+name = "layout_tests"
+path = "../../tests/rust/layout_tests.rs"
+
+[[test]]
+name = "geometry_tests"
+path = "../../tests/rust/geometry_tests.rs"

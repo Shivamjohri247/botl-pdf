@@ -1,0 +1,143 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "pre*"
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write  # required for Trusted Publishing (OIDC)
+  contents: read
+
+jobs:
+  # ------------------------------------------------------------------ #
+  # Build wheels on every platform + architecture
+  # ------------------------------------------------------------------ #
+  build-wheels:
+    name: Build wheel · ${{ matrix.platform.target }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          # Linux (manylinux)
+          - os: ubuntu-latest
+            target: x86_64
+            manylinux: auto
+          - os: ubuntu-latest
+            target: aarch64
+            manylinux: auto
+          # macOS
+          - os: macos-latest
+            target: x86_64
+          - os: macos-latest
+            target: aarch64
+          # Windows
+          - os: windows-latest
+            target: x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"  # abi3 minimum — wheel works for 3.10+
+
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          rust-toolchain: stable
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux || 'auto' }}
+          args: --release --out dist --interpreter python3.10
+          sccache: true
+
+      - name: Upload built wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.platform.target }}
+          path: dist
+
+  # ------------------------------------------------------------------ #
+  # Build sdist
+  # ------------------------------------------------------------------ #
+  build-sdist:
+    name: Build sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          rust-toolchain: stable
+          command: sdist
+          args: --out dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+  # ------------------------------------------------------------------ #
+  # Publish to TestPyPI for pre-release tags (pre*)
+  # ------------------------------------------------------------------ #
+  publish-testpypi:
+    name: Publish to TestPyPI
+    if: startsWith(github.ref, 'refs/tags/pre')
+    needs: [build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/botl-pdf/
+    permissions:
+      id-token: write  # OIDC for Trusted Publishing
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  # ------------------------------------------------------------------ #
+  # Publish to PyPI for release tags (v*)
+  # ------------------------------------------------------------------ #
+  publish-pypi:
+    name: Publish to PyPI
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/botl-pdf/
+    permissions:
+      id-token: write  # OIDC for Trusted Publishing
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

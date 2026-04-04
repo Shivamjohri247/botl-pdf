@@ -1,0 +1,17 @@
+[package]
+name = "botl-pdf-csys"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "C codec FFI bindings for botl-pdf"
+
+[build-dependencies]
+cc = "1"
+
+[dependencies]
+jpeg-decoder = "0.3"
+
+[features]
+default = []
+openjpeg = []

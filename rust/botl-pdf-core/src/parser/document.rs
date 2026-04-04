@@ -72,7 +72,10 @@ impl Document {
         let entry = *self
             .xref
             .get(reference.obj_num)
-            .ok_or(BotlError::InvalidReference(reference.obj_num, reference.gen_num))?;
+            .ok_or(BotlError::InvalidReference(
+                reference.obj_num,
+                reference.gen_num,
+            ))?;
 
         let object = match entry {
             XrefEntry::InUse { offset, .. } => {

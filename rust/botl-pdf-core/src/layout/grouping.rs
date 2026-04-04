@@ -93,7 +93,6 @@ pub fn words_to_lines(words: &[Word]) -> Vec<TextLine> {
     let mut line_y1 = words[0].bbox.y1;
 
     for curr in words.iter().skip(1) {
-
         // Check vertical overlap with current line
         let overlap_top = line_y0.max(curr.bbox.y0);
         let overlap_bot = line_y1.min(curr.bbox.y1);

@@ -40,7 +40,7 @@ htmlcov/
 .mypy_cache/
 
 # Benchmarks
-benchmarks/results/
+tests/python/benchmarks/results/
 
 # Claude Code
 .claude/

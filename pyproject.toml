@@ -3,7 +3,7 @@ requires = ["maturin>=1.7,<2"]
 build-backend = "maturin"
 
 [project]
-name = "botl-pdf"
+name = "botlpdf"
 dynamic = ["version"]
 description = "High-performance PDF processing: extract text, tables, images with a Rust + C core."
 readme = "README.md"
@@ -35,7 +35,7 @@ ocr-tesseract = ["pytesseract>=0.3", "Pillow>=10.0"]
 ocr-easyocr = ["easyocr>=1.7", "Pillow>=10.0"]
 pandas = ["pandas>=2.0"]
 cli = ["typer>=0.12", "rich>=13.0"]
-all = ["botl-pdf[render,debug,ocr-tesseract,pandas,cli]"]
+all = ["botlpdf[render,debug,ocr-tesseract,pandas,cli]"]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",

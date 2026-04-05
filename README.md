@@ -1,5 +1,7 @@
 # botl-pdf
 
+[![PyPI version](https://img.shields.io/pypi/v/botlpdf.svg)](https://pypi.org/project/botlpdf/) [![Python versions](https://img.shields.io/pypi/pyversions/botlpdf.svg)](https://pypi.org/project/botlpdf/) [![License](https://img.shields.io/pypi/l/botlpdf.svg)](https://pypi.org/project/botlpdf/)
+
 High-performance PDF text extraction library with a custom Rust core and Python bindings. No dependency on poppler, pdfium, or pdfbox — the entire PDF parsing and text extraction pipeline is written from scratch.
 
 ## Features
@@ -19,14 +21,14 @@ High-performance PDF text extraction library with a custom Rust core and Python 
 ## Install
 
 ```bash
-pip install botl-pdf
+pip install botlpdf
 ```
 
 Build from source (requires Rust toolchain):
 
 ```bash
 pip install maturin
-git clone https://github.com/botl-pdf/botl-pdf.git
+git clone https://github.com/Shivamjohri247/botl-pdf.git
 cd botl-pdf
 maturin develop --release
 ```
@@ -359,7 +361,7 @@ Common page sizes:
 Requires `Pillow`. Draws bounding boxes and geometric elements on a rendered page image — useful for debugging extraction issues or understanding PDF layout.
 
 ```bash
-pip install botl-pdf[debug]
+pip install botlpdf[debug]
 ```
 
 ```python
@@ -393,7 +395,7 @@ img.save("debug_all.png")
 ## CLI
 
 ```bash
-pip install botl-pdf[cli]
+pip install botlpdf[cli]
 ```
 
 ### Extract text

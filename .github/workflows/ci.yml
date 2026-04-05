@@ -76,13 +76,28 @@ jobs:
             rust/botl-pdf-csys -> target
             rust/botl-pdf-python -> target
 
+      - name: Create and activate virtualenv
+        run: |
+          python -m venv .venv
+          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+        if: runner.os != 'Windows'
+
+      - name: Create and activate virtualenv (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          python -m venv .venv
+          echo "VIRTUAL_ENV=$PWD\.venv" >> $env:GITHUB_ENV
+          echo "$PWD\.venv\Scripts" >> $env:GITHUB_PATH
+        shell: pwsh
+
       - name: Install maturin and dev dependencies
         run: |
           python -m pip install --upgrade pip
           pip install 'maturin>=1.7,<2'
           pip install ".[dev]"
 
-      - name: Build extension module (maturin develop)
+      - name: Build and install extension module (maturin develop)
         uses: PyO3/maturin-action@v1
         with:
           command: develop

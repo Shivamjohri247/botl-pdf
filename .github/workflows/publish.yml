@@ -23,13 +23,13 @@ jobs:
         platform:
           - label: linux-x86_64
             os: ubuntu-latest
-            target: x86_64
+            target: x86_64-unknown-linux-gnu
           - label: macos-aarch64
             os: macos-latest
-            target: aarch64
+            target: aarch64-apple-darwin
           - label: windows-x86_64
             os: windows-latest
-            target: x86_64
+            target: x86_64-pc-windows-msvc
 
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
       - name: Build wheel (Linux — native + auditwheel)
         if: runner.os == 'Linux'
         run: |
-          maturin build --release --out dist --target ${{ matrix.platform.target }} --skip-auditwheel
+          maturin build --release --out dist --skip-auditwheel
           pip install auditwheel
           for whl in dist/*.whl; do
             auditwheel repair "$whl" -w dist/

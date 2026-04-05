@@ -22,7 +22,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install build dependencies
-        run: pip install 'maturin>=1.7,<1.8' 'twine>=6'
+        run: pip install 'maturin>=1.5,<1.7' 'twine>=6'
 
       - name: Build wheel
         run: maturin build --release --out dist --interpreter python3.12

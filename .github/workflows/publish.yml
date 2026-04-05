@@ -30,6 +30,40 @@ jobs:
       - name: Build sdist
         run: maturin sdist --out dist
 
+      - name: Strip License-File from wheel metadata
+        run: |
+          python - <<'PYEOF'
+          import zipfile, os, tempfile, shutil, glob
+
+          for whl in glob.glob("dist/*.whl"):
+              print(f"Processing {whl}")
+              tmpdir = tempfile.mkdtemp()
+              try:
+                  with zipfile.ZipFile(whl, 'r') as z:
+                      z.extractall(tmpdir)
+                      for root, dirs, files in os.walk(tmpdir):
+                          for f in files:
+                              if f == 'METADATA':
+                                  path = os.path.join(root, f)
+                                  with open(path) as fh:
+                                      lines = fh.readlines()
+                                  filtered = [l for l in lines if not l.startswith('License-File:')]
+                                  removed = len(lines) - len(filtered)
+                                  if removed:
+                                      with open(path, 'w') as fh:
+                                          fh.writelines(filtered)
+                                      print(f"  Stripped {removed} License-File line(s)")
+                  os.remove(whl)
+                  with zipfile.ZipFile(whl, 'w', zipfile.ZIP_DEFLATED) as z:
+                      for root, dirs, files in os.walk(tmpdir):
+                          for f in files:
+                              fp = os.path.join(root, f)
+                              arcname = os.path.relpath(fp, tmpdir)
+                              z.write(fp, arcname)
+              finally:
+                  shutil.rmtree(tmpdir)
+          PYEOF
+
       - name: Verify package metadata
         run: twine check dist/*
 

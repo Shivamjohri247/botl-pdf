@@ -12,5 +12,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 botl-pdf-core = { path = "../botl-pdf-core" }
-pyo3 = { workspace = true }
+pyo3 = { workspace = true, features = ["extension-module"] }
 parking_lot = { workspace = true }

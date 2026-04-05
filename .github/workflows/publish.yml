@@ -18,26 +18,24 @@ jobs:
   # Build wheels on every platform + architecture
   # ------------------------------------------------------------------ #
   build-wheels:
-    name: Build wheel · ${{ matrix.platform.target }}
+    name: Build ${{ matrix.platform.label }}
     runs-on: ${{ matrix.platform.os }}
     strategy:
       fail-fast: false
       matrix:
         platform:
-          # Linux (manylinux)
-          - os: ubuntu-latest
+          - label: linux-x86_64
+            os: ubuntu-latest
             target: x86_64
             manylinux: auto
-          - os: ubuntu-latest
-            target: aarch64
-            manylinux: auto
-          # macOS
-          - os: macos-latest
+          - label: macos-x86_64
+            os: macos-13  # Intel runners
             target: x86_64
-          - os: macos-latest
+          - label: macos-aarch64
+            os: macos-latest
             target: aarch64
-          # Windows
-          - os: windows-latest
+          - label: windows-x86_64
+            os: windows-latest
             target: x86_64
 
     steps:
@@ -46,7 +44,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"  # abi3 minimum — wheel works for 3.10+
+          python-version: "3.10"
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
@@ -54,13 +52,13 @@ jobs:
           rust-toolchain: stable
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux || 'auto' }}
-          args: --release --out dist --interpreter python3.10
-          sccache: true
+          args: --release --out dist
+          sccache: ${{ matrix.platform.os != 'windows-latest' }}
 
       - name: Upload built wheel
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.platform.target }}
+          name: wheels-${{ matrix.platform.label }}
           path: dist
 
   # ------------------------------------------------------------------ #
@@ -113,7 +111,7 @@ jobs:
           command: upload
           args: dist/*
         env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
           MATURIN_REPOSITORY_URL: https://test.pypi.org/legacy/
 
   # ------------------------------------------------------------------ #

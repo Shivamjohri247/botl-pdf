@@ -11,7 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  id-token: write  # required for Trusted Publishing (OIDC)
   contents: read
 
 jobs:
@@ -99,11 +98,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/pre')
     needs: [build-wheels, build-sdist]
     runs-on: ubuntu-latest
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/project/botl-pdf/
-    permissions:
-      id-token: write  # OIDC for Trusted Publishing
+    environment: testpypi
 
     steps:
       - name: Download all artifacts
@@ -113,10 +108,13 @@ jobs:
           merge-multiple: true
 
       - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: PyO3/maturin-action@v1
         with:
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
+          command: upload
+          args: dist/*
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          MATURIN_REPOSITORY_URL: https://test.pypi.org/legacy/
 
   # ------------------------------------------------------------------ #
   # Publish to PyPI for release tags (v*)
@@ -126,11 +124,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [build-wheels, build-sdist]
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/botl-pdf/
-    permissions:
-      id-token: write  # OIDC for Trusted Publishing
+    environment: pypi
 
     steps:
       - name: Download all artifacts
@@ -140,4 +134,9 @@ jobs:
           merge-multiple: true
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: PyO3/maturin-action@v1
+        with:
+          command: upload
+          args: dist/*
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

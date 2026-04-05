@@ -27,10 +27,6 @@ jobs:
           - label: linux-x86_64
             os: ubuntu-latest
             target: x86_64
-            manylinux: auto
-          - label: macos-x86_64
-            os: macos-13  # Intel runners
-            target: x86_64
           - label: macos-aarch64
             os: macos-latest
             target: aarch64
@@ -51,9 +47,9 @@ jobs:
         with:
           rust-toolchain: stable
           target: ${{ matrix.platform.target }}
-          manylinux: ${{ matrix.platform.manylinux || 'auto' }}
+          manylinux: auto
           args: --release --out dist
-          sccache: ${{ matrix.platform.os != 'windows-latest' }}
+          sccache: false
 
       - name: Upload built wheel
         uses: actions/upload-artifact@v4

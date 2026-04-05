@@ -303,7 +303,7 @@ fn test_analyze_layout_basic() {
         make_char("i", 8.0, 0.0, 13.0, 12.0),
     ];
     let params = LayoutParams::default();
-    let blocks = analyze_layout(&chars, &params);
+    let blocks = analyze_layout(chars, &params);
 
     assert!(!blocks.is_empty(), "Should produce at least one block");
     assert!(
@@ -315,7 +315,7 @@ fn test_analyze_layout_basic() {
 #[test]
 fn test_analyze_layout_empty() {
     let params = LayoutParams::default();
-    let blocks = analyze_layout(&[], &params);
+    let blocks = analyze_layout(vec![], &params);
     assert!(blocks.is_empty());
 }
 
@@ -335,7 +335,7 @@ fn test_analyze_layout_two_words_one_line() {
         make_char("d", 70.0, 0.0, 77.0, 12.0),
     ];
     let params = LayoutParams::default();
-    let blocks = analyze_layout(&chars, &params);
+    let blocks = analyze_layout(chars, &params);
 
     assert!(!blocks.is_empty());
     let text = &blocks[0].text;
@@ -350,7 +350,7 @@ fn test_analyze_layout_two_lines() {
         make_char("B", 0.0, 20.0, 8.0, 32.0),
     ];
     let params = LayoutParams::default();
-    let blocks = analyze_layout(&chars, &params);
+    let blocks = analyze_layout(chars, &params);
 
     // These are on different lines; depending on line_margin, may be one or two blocks
     assert!(!blocks.is_empty());
@@ -370,7 +370,7 @@ fn test_blocks_to_text() {
         make_char("b", 20.0, 0.0, 28.0, 12.0),
     ];
     let params = LayoutParams::default();
-    let blocks = analyze_layout(&chars, &params);
+    let blocks = analyze_layout(chars, &params);
     let text = blocks_to_text(&blocks);
     assert!(!text.is_empty());
 }
@@ -379,7 +379,7 @@ fn test_blocks_to_text() {
 fn test_blocks_to_layout_text() {
     let chars = vec![make_char("X", 0.0, 0.0, 8.0, 12.0)];
     let params = LayoutParams::default();
-    let blocks = analyze_layout(&chars, &params);
+    let blocks = analyze_layout(chars, &params);
     let text = blocks_to_layout_text(&blocks, 612.0);
     assert!(text.contains("X"));
 }
@@ -489,7 +489,7 @@ fn test_layout_pipeline_on_simple_text_pdf() {
 
     // Run layout analysis
     let params = LayoutParams::default();
-    let blocks = analyze_layout(&result.chars, &params);
+    let blocks = analyze_layout(result.chars, &params);
 
     assert!(!blocks.is_empty(), "Should produce at least one block");
 

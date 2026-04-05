@@ -26,4 +26,4 @@ from botl_pdf._core import (  # noqa: F401
     PyWriter,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

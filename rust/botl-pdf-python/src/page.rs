@@ -465,9 +465,9 @@ impl PyPage {
                 }
             };
 
-            // Generate text
+            // Generate text (uses layout analysis to now taking ownership of chars)
             if let Some(lp) = params {
-                let blocks = analyze_layout(&extracted.chars, &lp);
+                let blocks = analyze_layout(extracted.chars, &lp);
                 if layout {
                     Ok(blocks_to_layout_text(&blocks, extracted.width))
                 } else {
@@ -476,7 +476,7 @@ impl PyPage {
             } else {
                 // Default mode: use layout analysis with default params for proper spacing
                 let lp = LayoutParams::default();
-                let blocks = analyze_layout(&extracted.chars, &lp);
+                let blocks = analyze_layout(extracted.chars, &lp);
                 Ok(blocks_to_text(&blocks))
             }
         })?;

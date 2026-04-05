@@ -1,5 +1,5 @@
 use crate::error::{BotlError, Result};
-use crate::parser::objects::{ObjRef, ObjectParser, PdfDict, PdfObject, PdfStream};
+use crate::parser::objects::{ObjRef, ObjectParser, PdfDict, PdfObject};
 use crate::parser::xref::{parse_xref_from_data, XrefEntry, XrefTable};
 use hashbrown::HashMap;
 use std::path::Path;
@@ -134,53 +134,8 @@ impl Document {
         Ok(arc)
     }
 
-    /// Parse objects from an object stream (ObjStm).
-    fn parse_object_from_stream(
-        &mut self,
-        stream: &PdfStream,
-        target_index: u32,
-    ) -> Result<PdfObject> {
-        let decoded = crate::codecs::decode_stream_data(stream)?;
-        self.parse_object_from_decoded_data(&decoded, &stream.dict, target_index)
-    }
-
     /// Parse a target object from already-decoded object stream data.
     fn parse_object_from_decoded_data(
-        &self,
-        decoded: &[u8],
-        stream_dict: &PdfDict,
-        target_index: u32,
-    ) -> Result<PdfObject> {
-        let n = stream_dict
-            .get_integer("N")
-            .ok_or_else(|| BotlError::ParseError("Object stream missing N".into()))?
-            as u32;
-        let first = stream_dict
-            .get_integer("First")
-            .ok_or_else(|| BotlError::ParseError("Object stream missing First".into()))?
-            as usize;
-
-        let header_data = &decoded[..first];
-        let mut parser = ObjectParser::new(header_data);
-        let mut pairs = Vec::new();
-        for _ in 0..n {
-            let obj_num = parser.parse_object()?.as_integer().unwrap_or(0) as u32;
-            let offset = parser.parse_object()?.as_integer().unwrap_or(0) as usize;
-            pairs.push((obj_num, offset));
-        }
-
-        if (target_index as usize) >= pairs.len() {
-            return Err(BotlError::ParseError(
-                "Object stream index out of range".into(),
-            ));
-        }
-
-        let (_obj_num, offset) = pairs[target_index as usize];
-        let abs_offset = first + offset;
-        let mut obj_parser = ObjectParser::new(&decoded[abs_offset..]);
-        obj_parser.parse_object()
-    }    /// Parse a target object from already-decoded object stream data.
-    fn parse_object_from_decoded(
         &self,
         decoded: &[u8],
         stream_dict: &PdfDict,

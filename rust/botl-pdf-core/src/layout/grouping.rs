@@ -20,9 +20,8 @@ pub fn chars_to_words(chars: &[Char], word_margin: f64) -> Vec<Word> {
         // Calculate gap between previous and current character
         let gap = curr.bbox.x0 - prev.bbox.x1;
 
-        // Threshold based on font size
+        // Font size average for fallback threshold
         let avg_font_size = (prev.font_size + curr.font_size) / 2.0;
-        let threshold = word_margin * avg_font_size;
 
         // Break word on: font change, vertical displacement, or space
         let font_changed =
@@ -39,14 +38,31 @@ pub fn chars_to_words(chars: &[Char], word_margin: f64) -> Vec<Word> {
         let curr_is_space = curr.text == " ";
         let is_space = prev_is_space || curr_is_space;
 
-        // Gap-based breaking: only break on large gaps when a space is involved.
-        // Without a space, large gaps are typically from justified text stretching
-        // or PDF producers splitting a single word across Tj operations.
-        // Use a generous absolute threshold (5x font_size) as a safety net for
-        // extreme cases like column boundaries with no space.
-        let large_gap_break = gap > threshold && (is_space || gap > avg_font_size * 5.0);
+        // Gap-based word break: compare gap to average character width.
+        // Some PDFs have no space characters — word boundaries are encoded
+        // purely as position gaps from TJ array kern adjustments. We detect
+        // these by checking if the gap exceeds a fraction of the character width.
+        let prev_char_width = prev.bbox.x1 - prev.bbox.x0;
+        let curr_char_width = curr.bbox.x1 - curr.bbox.x0;
+        let avg_char_width = (prev_char_width + curr_char_width) / 2.0;
 
-        if large_gap_break || font_changed || vertical_break || is_space {
+        let gap_break = if avg_char_width > 0.0 {
+            let ratio = gap / avg_char_width;
+            if is_space {
+                // Space char present — standard threshold
+                ratio > word_margin * 0.5
+            } else {
+                // No space char — detect word boundaries from gaps alone.
+                // Intra-word gaps are typically < 0.1× char width.
+                // A gap > 0.5× char width is almost certainly a word boundary.
+                ratio > 0.5
+            }
+        } else {
+            // Fallback for degenerate cases (zero-width chars)
+            gap > avg_font_size * 0.3
+        };
+
+        if gap_break || font_changed || vertical_break || is_space {
             // Space character becomes a word boundary
             if current_chars.len() == 1 && current_chars[0].text == " " {
                 // Skip standalone space "words"

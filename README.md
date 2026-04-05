@@ -569,44 +569,39 @@ The pipeline is entirely custom Rust — no dependency on poppler, pdfium, pdfbo
 
 ## Benchmarks
 
-Tested against PyMuPDF on real-world PDFs (textbooks, novels, academic papers). v0.2.0 includes performance optimizations and improved word boundary detection.
+Tested on real-world PDFs (textbooks, novels, academic papers — 6,663 pages total).
 
 ### Text Extraction Quality
 
-| PDF | Pages | botl-pdf words | PyMuPDF words | Word coverage |
-|---|---|---|---|---|
-| Acrimonious (novel) | 408 | 118,767 | 110,314 | 107.7% |
-| Agentic Mesh (tech) | 558 | 136,669 | 132,386 | 103.2% |
-| Azure Fundamentals | 576 | 89,490 | 87,183 | 102.6% |
-| Data Science (textbook) | 438 | 100,594 | 93,286 | 107.8% |
-| Discrete Math (textbook) | 565 | 93,691 | 89,968 | 104.1% |
-| Mastering AI System Design | 1,038 | 85,854 | 82,608 | 103.9% |
-| System Design Interview | 341 | 47,769 | 46,523 | 102.7% |
-| American Revolution | 293 | 107,411 | 99,897 | 107.5% |
-| Rust Programming 3E | 806 | 203,941 | 196,748 | 103.7% |
-| **Total** | **6,663** | **1,399,763** | **1,331,742** | **105.1%** |
-
-Character-level coverage: **99.7%** of PyMuPDF. botl-pdf extracts 5% more words overall.
+| PDF | Pages | Words Extracted |
+|---|---|---|
+| Acrimonious (novel) | 408 | 118,767 |
+| Agentic Mesh (tech) | 558 | 136,669 |
+| Azure Fundamentals | 576 | 89,490 |
+| Data Science (textbook) | 438 | 100,594 |
+| Discrete Math (textbook) | 565 | 93,691 |
+| Mastering AI System Design | 1,038 | 85,854 |
+| System Design Interview | 341 | 47,769 |
+| American Revolution | 293 | 107,411 |
+| Rust Programming 3E | 806 | 203,941 |
+| **Total** | **6,663** | **1,399,763** |
 
 ### Performance
 
-| PDF | Pages | botl-pdf | PyMuPDF | Ratio |
-|---|---|---|---|---|
-| Mastering AI System Design | 1,038 | 0.56s | 0.72s | **0.78x (faster)** |
-| System Design Interview | 341 | 0.21s | 0.31s | **0.66x (faster)** |
-| Discrete Math | 565 | 0.45s | 0.45s | **1.00x (equal)** |
-| Faking Fore-Ever (novel) | 196 | 0.21s | 0.21s | **0.98x (faster)** |
-| American Revolution | 293 | 0.49s | 0.39s | 1.27x |
-| Rust Programming 3E | 806 | 0.91s | 0.73s | 1.23x |
-| **Overall (17 PDFs)** | **6,663** | **6.40s** | **5.86s** | **1.09x** |
-
-Overall ~9% slower than PyMuPDF, faster on 5 of 17 PDFs. Competitive on the rest.
+| PDF | Pages | Time |
+|---|---|---|
+| Mastering AI System Design | 1,038 | 0.56s |
+| System Design Interview | 341 | 0.21s |
+| Discrete Math | 565 | 0.45s |
+| Faking Fore-Ever (novel) | 196 | 0.21s |
+| American Revolution | 293 | 0.49s |
+| Rust Programming 3E | 806 | 0.91s |
+| **Overall (17 PDFs)** | **6,663** | **6.40s** |
 
 ### What changed in v0.2.0
 
 - **~2x faster** than v0.1.x through Arc-based caching, cross-page font cache, zlib-ng backend, and reduced cloning
 - **Fixed word boundary detection** for PDFs that encode spaces as position gaps instead of literal space characters
-- Character coverage improved from partial to **99.7%** of PyMuPDF across diverse PDF types
 
 ---
 

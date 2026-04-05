@@ -251,7 +251,9 @@ fn build_font_cache(
 
         // Store in shared document-level cache if this was a reference
         if let Some(font_ref) = value.as_reference() {
-            shared_font_cache.lock().insert(font_ref.obj_num, font.clone());
+            shared_font_cache
+                .lock()
+                .insert(font_ref.obj_num, font.clone());
         }
 
         cache.insert(key, font);

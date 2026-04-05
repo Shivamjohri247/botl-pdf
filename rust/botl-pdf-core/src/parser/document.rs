@@ -110,15 +110,16 @@ impl Document {
                         BotlError::ParseError("Expected stream for object stream".into())
                     })?;
                     let decoded = Arc::new(crate::codecs::decode_stream_data(stream)?);
-                    self.obj_stream_cache.insert(obj_stream_num, Arc::clone(&decoded));
+                    self.obj_stream_cache
+                        .insert(obj_stream_num, Arc::clone(&decoded));
                     decoded
                 };
                 // We need the stream dict for N/First values; resolve the stream again
                 // (it's cached in object_cache, so this is cheap)
                 let stream_obj = self.resolve(ObjRef::new(obj_stream_num, 0))?;
-                let stream_dict = stream_obj.as_stream()
-                    .map(|s| &s.dict)
-                    .ok_or_else(|| BotlError::ParseError("Expected stream for object stream".into()))?;
+                let stream_dict = stream_obj.as_stream().map(|s| &s.dict).ok_or_else(|| {
+                    BotlError::ParseError("Expected stream for object stream".into())
+                })?;
                 self.parse_object_from_decoded_data(&decoded, stream_dict, index)?
             }
             XrefEntry::Free { .. } => {
@@ -130,7 +131,8 @@ impl Document {
         };
 
         let arc = Arc::new(object);
-        self.object_cache.insert(reference.obj_num, Arc::clone(&arc));
+        self.object_cache
+            .insert(reference.obj_num, Arc::clone(&arc));
         Ok(arc)
     }
 

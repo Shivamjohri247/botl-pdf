@@ -150,7 +150,15 @@ impl PyDocument {
 
         let (width, height, rotation, label) = self.page_info_cache[index].clone();
 
-        let page = PyPage::new(index, label, rotation, width, height, self.doc.clone(), self.font_cache.clone());
+        let page = PyPage::new(
+            index,
+            label,
+            rotation,
+            width,
+            height,
+            self.doc.clone(),
+            self.font_cache.clone(),
+        );
         Py::new(py, page)
     }
 

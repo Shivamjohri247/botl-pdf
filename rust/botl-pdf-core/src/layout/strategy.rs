@@ -269,10 +269,7 @@ fn de_interleave_by_indices(chars: &[Char], indices: &mut [usize]) {
     // De-interleave: group by run_id, sort each group by x, order by run_id
     let mut run_groups: HashMap<u32, Vec<usize>> = HashMap::new();
     for &idx in indices.iter() {
-        run_groups
-            .entry(chars[idx].run_id)
-            .or_default()
-            .push(idx);
+        run_groups.entry(chars[idx].run_id).or_default().push(idx);
     }
     for group in run_groups.values_mut() {
         group.sort_by(|&a, &b| {

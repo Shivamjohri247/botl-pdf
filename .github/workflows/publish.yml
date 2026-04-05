@@ -14,9 +14,6 @@ permissions:
   contents: read
 
 jobs:
-  # ------------------------------------------------------------------ #
-  # Build wheels on every platform + architecture
-  # ------------------------------------------------------------------ #
   build-wheels:
     name: Build ${{ matrix.platform.label }}
     runs-on: ${{ matrix.platform.os }}
@@ -42,12 +39,25 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Build wheel
+      - name: Install Python dependencies
+        run: python -m pip install maturin
+
+      - name: Build wheel (Linux — native + auditwheel)
+        if: runner.os == 'Linux'
+        run: |
+          maturin build --release --out dist --target ${{ matrix.platform.target }} --skip-auditwheel
+          pip install auditwheel
+          for whl in dist/*.whl; do
+            auditwheel repair "$whl" -w dist/
+            rm "$whl"
+          done
+
+      - name: Build wheel (macOS / Windows)
+        if: runner.os != 'Linux'
         uses: PyO3/maturin-action@v1
         with:
           rust-toolchain: stable
           target: ${{ matrix.platform.target }}
-          manylinux: auto
           args: --release --out dist
           sccache: false
 
@@ -57,9 +67,6 @@ jobs:
           name: wheels-${{ matrix.platform.label }}
           path: dist
 
-  # ------------------------------------------------------------------ #
-  # Build sdist
-  # ------------------------------------------------------------------ #
   build-sdist:
     name: Build sdist
     runs-on: ubuntu-latest
@@ -72,11 +79,9 @@ jobs:
           python-version: "3.10"
 
       - name: Build sdist
-        uses: PyO3/maturin-action@v1
-        with:
-          rust-toolchain: stable
-          command: sdist
-          args: --out dist
+        run: |
+          pip install maturin
+          maturin sdist --out dist
 
       - name: Upload sdist
         uses: actions/upload-artifact@v4
@@ -84,9 +89,6 @@ jobs:
           name: sdist
           path: dist
 
-  # ------------------------------------------------------------------ #
-  # Publish to TestPyPI for pre-release tags (pre*)
-  # ------------------------------------------------------------------ #
   publish-testpypi:
     name: Publish to TestPyPI
     if: startsWith(github.ref, 'refs/tags/pre')
@@ -102,17 +104,12 @@ jobs:
           merge-multiple: true
 
       - name: Publish to TestPyPI
-        uses: PyO3/maturin-action@v1
-        with:
-          command: upload
-          args: dist/*
+        run: |
+          pip install maturin
+          maturin upload dist/* --repository-url https://test.pypi.org/legacy/
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-          MATURIN_REPOSITORY_URL: https://test.pypi.org/legacy/
 
-  # ------------------------------------------------------------------ #
-  # Publish to PyPI for release tags (v*)
-  # ------------------------------------------------------------------ #
   publish-pypi:
     name: Publish to PyPI
     if: startsWith(github.ref, 'refs/tags/v')
@@ -128,9 +125,8 @@ jobs:
           merge-multiple: true
 
       - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
-        with:
-          command: upload
-          args: dist/*
+        run: |
+          pip install maturin
+          maturin upload dist/*
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

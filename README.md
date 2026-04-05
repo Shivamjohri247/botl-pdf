@@ -569,33 +569,33 @@ The pipeline is entirely custom Rust — no dependency on poppler, pdfium, pdfbo
 
 ## Benchmarks
 
-Tested on real-world PDFs (textbooks, novels, academic papers — 6,663 pages total).
+Tested on real-world PDFs (textbooks, novels, academic papers — 17 PDFs, 6,663 pages total).
 
 ### Text Extraction Quality
 
-| PDF | Pages | Words Extracted |
+| Type | Pages | Words Extracted |
 |---|---|---|
-| Acrimonious (novel) | 408 | 118,767 |
-| Agentic Mesh (tech) | 558 | 136,669 |
-| Azure Fundamentals | 576 | 89,490 |
-| Data Science (textbook) | 438 | 100,594 |
-| Discrete Math (textbook) | 565 | 93,691 |
-| Mastering AI System Design | 1,038 | 85,854 |
-| System Design Interview | 341 | 47,769 |
-| American Revolution | 293 | 107,411 |
-| Rust Programming 3E | 806 | 203,941 |
-| **Total** | **6,663** | **1,399,763** |
+| Novel | 408 | 118,767 |
+| Tech book | 558 | 136,669 |
+| Study guide | 576 | 89,490 |
+| Textbook | 438 | 100,594 |
+| Textbook | 565 | 93,691 |
+| Tech book | 1,038 | 85,854 |
+| Tech book | 341 | 47,769 |
+| History book | 293 | 107,411 |
+| Programming book | 806 | 203,941 |
+| **Total (17 PDFs)** | **6,663** | **1,399,763** |
 
 ### Performance
 
-| PDF | Pages | Time |
+| Type | Pages | Time |
 |---|---|---|
-| Mastering AI System Design | 1,038 | 0.56s |
-| System Design Interview | 341 | 0.21s |
-| Discrete Math | 565 | 0.45s |
-| Faking Fore-Ever (novel) | 196 | 0.21s |
-| American Revolution | 293 | 0.49s |
-| Rust Programming 3E | 806 | 0.91s |
+| Tech book | 1,038 | 0.56s |
+| Tech book | 341 | 0.21s |
+| Textbook | 565 | 0.45s |
+| Novel | 196 | 0.21s |
+| History book | 293 | 0.49s |
+| Programming book | 806 | 0.91s |
 | **Overall (17 PDFs)** | **6,663** | **6.40s** |
 
 ### What changed in v0.2.0

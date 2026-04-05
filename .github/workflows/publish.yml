@@ -48,7 +48,6 @@ jobs:
           rust-toolchain: stable
           target: ${{ matrix.platform.target }}
           manylinux: auto
-          interpreter: "3.10"
           args: --release --out dist
           sccache: false
 

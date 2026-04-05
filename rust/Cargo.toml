@@ -11,12 +11,12 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.80"
 license = "Apache-2.0"
-repository = "https://github.com/botl-pdf/botl-pdf"
+repository = "https://github.com/Shivamjohri247/botl-pdf"
 
 [workspace.dependencies]
 botl-pdf-core = { path = "botl-pdf-core" }
 botl-pdf-csys = { path = "botl-pdf-csys" }
-pyo3 = { version = "0.23", features = ["abi3-py310"] }
+pyo3 = { version = "0.23", features = ["abi3-py38"] }
 parking_lot = "0.12"
 nom = "7"
 flate2 = { version = "1", default-features = true }

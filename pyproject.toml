@@ -47,8 +47,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/botl-pdf/botl-pdf"
-Repository = "https://github.com/botl-pdf/botl-pdf"
+Homepage = "https://github.com/Shivamjohri247/botl-pdf"
+Repository = "https://github.com/Shivamjohri247/botl-pdf"
 
 [project.scripts]
 botl-pdf = "botl_pdf.cli.main:app"

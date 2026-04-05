@@ -54,13 +54,15 @@ impl CMap {
                     if line.is_empty() {
                         continue;
                     }
-                    // Format: <start_hex> <end_hex> <dst_start_hex>
-                    if let Some((start_code, end_code, dst_start)) = parse_bf_range_line(line) {
-                        cmap.bf_range.push((start_code, end_code, dst_start));
+                    if let Some((start_code, end_code, start_unicode)) = parse_bf_range_line(line) {
+                        cmap.bf_range.push((start_code, end_code, start_unicode));
                     }
                 }
             }
         }
+
+        // Sort bf_range by start_code for binary search
+        cmap.bf_range.sort_by_key(|(s, _, _)| *s);
 
         Ok(cmap)
     }
@@ -72,9 +74,11 @@ impl CMap {
             return Some(unicode);
         }
 
-        // Check range mappings
-        for &(start, end, dst_start) in &self.bf_range {
-            if code >= start && code <= end {
+        // Binary search on sorted bf_range
+        let idx = self.bf_range.partition_point(|(s, _, _)| *s <= code);
+        if idx > 0 {
+            let (start, end, dst_start) = &self.bf_range[idx - 1];
+            if code >= *start && code <= *end {
                 return Some(dst_start + (code - start));
             }
         }

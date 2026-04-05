@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 
 use botl_pdf_core::parser::document::{Document, DocumentMetadata};
+use botl_pdf_core::text::fonts::Font;
 
 use crate::elements::PyTOCEntry;
 use crate::errors::IntoPyResult;
@@ -28,6 +29,9 @@ pub struct PyDocument {
     /// Cache of page dimensions and metadata to avoid re-parsing.
     /// Stored as (width, height, rotation, label) tuples.
     page_info_cache: Vec<(f64, f64, i32, String)>,
+    /// Document-level font cache keyed by font object number.
+    /// Avoids re-parsing identical fonts across pages.
+    font_cache: Arc<parking_lot::Mutex<hashbrown::HashMap<u32, Font>>>,
 }
 
 impl PyDocument {
@@ -35,6 +39,7 @@ impl PyDocument {
         Self {
             doc: Arc::new(parking_lot::Mutex::new(doc)),
             page_info_cache: Vec::new(),
+            font_cache: Arc::new(parking_lot::Mutex::new(hashbrown::HashMap::new())),
         }
     }
 
@@ -145,7 +150,7 @@ impl PyDocument {
 
         let (width, height, rotation, label) = self.page_info_cache[index].clone();
 
-        let page = PyPage::new(index, label, rotation, width, height, self.doc.clone());
+        let page = PyPage::new(index, label, rotation, width, height, self.doc.clone(), self.font_cache.clone());
         Py::new(py, page)
     }
 

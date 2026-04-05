@@ -95,6 +95,8 @@ pub struct PyPage {
     data: Arc<parking_lot::Mutex<Option<PageData>>>,
     /// Shared parsed document for content extraction.
     doc: Arc<parking_lot::Mutex<Document>>,
+    /// Document-level font cache, keyed by font ObjRef.obj_num.
+    font_cache: Arc<parking_lot::Mutex<hashbrown::HashMap<u32, Font>>>,
 }
 
 impl PyPage {
@@ -105,6 +107,7 @@ impl PyPage {
         width: f64,
         height: f64,
         doc: Arc<parking_lot::Mutex<Document>>,
+        font_cache: Arc<parking_lot::Mutex<hashbrown::HashMap<u32, Font>>>,
     ) -> Self {
         Self {
             page_number,
@@ -114,6 +117,7 @@ impl PyPage {
             height,
             data: Arc::new(parking_lot::Mutex::new(None)),
             doc,
+            font_cache,
         }
     }
 
@@ -130,7 +134,7 @@ impl PyPage {
             let mut doc = self.doc.lock();
             let page_dict = doc.get_page(self.page_number).into_py()?;
             let (width, height) = extract_mediabox(&page_dict, self.width, self.height);
-            let font_cache = build_font_cache(&page_dict, &mut doc)?;
+            let font_cache = build_font_cache(&page_dict, &mut doc, &self.font_cache)?;
             let content_data = get_content_stream(&page_dict, &mut doc)?;
             let result = interpret_content_stream(&content_data, &font_cache, height).into_py()?;
             PageData::from_interpret_result(result, width, height)
@@ -169,6 +173,7 @@ fn extract_mediabox(
 fn build_font_cache(
     page_dict: &botl_pdf_core::parser::objects::PdfDict,
     doc: &mut Document,
+    shared_font_cache: &Arc<parking_lot::Mutex<hashbrown::HashMap<u32, Font>>>,
 ) -> PyResult<FontCache> {
     let mut cache = FontCache::new();
 
@@ -185,11 +190,20 @@ fn build_font_cache(
     for (key, value) in font_dict.iter() {
         let font_name_str = std::str::from_utf8(key).unwrap_or("?");
 
+        // Check if this font is already in the shared document-level cache
+        if let Some(font_ref) = value.as_reference() {
+            let shared = shared_font_cache.lock();
+            if let Some(cached_font) = shared.get(&font_ref.obj_num) {
+                cache.insert(key, cached_font.clone());
+                continue;
+            }
+        }
+
         // Obtain the top-level font dictionary
-        let font_dict_obj = if let Some(font_ref) = value.as_reference() {
+        let font_dict_obj: Option<Arc<PdfObject>> = if let Some(font_ref) = value.as_reference() {
             doc.resolve(font_ref).into_py().ok()
         } else {
-            Some(value.clone())
+            Some(Arc::new(value.clone()))
         };
 
         let Some(font_obj) = font_dict_obj else {
@@ -233,6 +247,11 @@ fn build_font_cache(
                     }
                 }
             }
+        }
+
+        // Store in shared document-level cache if this was a reference
+        if let Some(font_ref) = value.as_reference() {
+            shared_font_cache.lock().insert(font_ref.obj_num, font.clone());
         }
 
         cache.insert(key, font);
@@ -416,6 +435,7 @@ impl PyPage {
         // Clone handle for the closure; the actual heavy work happens without GIL.
         let data_handle = self.data.clone();
         let doc_handle = self.doc.clone();
+        let font_cache_handle = self.font_cache.clone();
         let page_index = self.page_number;
         let default_w = self.width;
         let default_h = self.height;
@@ -430,7 +450,7 @@ impl PyPage {
                     let mut doc = doc_handle.lock();
                     let page_dict = doc.get_page(page_index).into_py()?;
                     let (width, height) = extract_mediabox(&page_dict, default_w, default_h);
-                    let font_cache = build_font_cache(&page_dict, &mut doc)?;
+                    let font_cache = build_font_cache(&page_dict, &mut doc, &font_cache_handle)?;
                     let content_data = get_content_stream(&page_dict, &mut doc)?;
                     let result =
                         interpret_content_stream(&content_data, &font_cache, height).into_py()?;

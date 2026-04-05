@@ -10,7 +10,7 @@ keywords = ["pdf", "text-extraction", "layout", "tables"]
 
 [dependencies]
 nom = { workspace = true }
-flate2 = { version = "1", default-features = true }
+flate2 = { version = "1", default-features = false, features = ["zlib-ng"] }
 ring = { workspace = true }
 encoding_rs = { workspace = true }
 hashbrown = { workspace = true }

@@ -3,6 +3,7 @@ use crate::parser::objects::{ObjRef, ObjectParser, PdfDict, PdfObject, PdfStream
 use crate::parser::xref::{parse_xref_from_data, XrefEntry, XrefTable};
 use hashbrown::HashMap;
 use std::path::Path;
+use std::sync::Arc;
 
 /// A parsed PDF document.
 pub struct Document {
@@ -10,10 +11,13 @@ pub struct Document {
     data: Vec<u8>,
     /// The cross-reference table.
     xref: XrefTable,
-    /// Cache of parsed indirect objects.
-    object_cache: HashMap<u32, PdfObject>,
+    /// Cache of parsed indirect objects, wrapped in Arc to avoid cloning large trees.
+    object_cache: HashMap<u32, Arc<PdfObject>>,
     /// Flattened page references (lazily populated).
     page_cache: Option<Vec<ObjRef>>,
+    /// Cache of decoded object stream data, keyed by object stream number.
+    /// Avoids re-decompressing the same stream when resolving sibling objects.
+    obj_stream_cache: HashMap<u32, Arc<Vec<u8>>>,
 }
 
 impl Document {
@@ -40,6 +44,7 @@ impl Document {
             xref,
             object_cache: HashMap::new(),
             page_cache: None,
+            obj_stream_cache: HashMap::new(),
         };
 
         // Pre-load the root catalog
@@ -63,10 +68,11 @@ impl Document {
     }
 
     /// Resolve an indirect object reference to its PdfObject.
-    pub fn resolve(&mut self, reference: ObjRef) -> Result<PdfObject> {
+    /// Returns an Arc<PdfObject> to avoid cloning large object trees on cache hits.
+    pub fn resolve(&mut self, reference: ObjRef) -> Result<Arc<PdfObject>> {
         // Check cache first
         if let Some(obj) = self.object_cache.get(&reference.obj_num) {
-            return Ok(obj.clone());
+            return Ok(Arc::clone(obj));
         }
 
         let entry = *self
@@ -94,12 +100,26 @@ impl Document {
                 obj_stream_num,
                 index,
             } => {
-                // Load the object stream
+                // Check object stream cache first
+                let decoded = if let Some(cached) = self.obj_stream_cache.get(&obj_stream_num) {
+                    Arc::clone(cached)
+                } else {
+                    // Load and decompress the object stream
+                    let stream_obj = self.resolve(ObjRef::new(obj_stream_num, 0))?;
+                    let stream = stream_obj.as_stream().ok_or_else(|| {
+                        BotlError::ParseError("Expected stream for object stream".into())
+                    })?;
+                    let decoded = Arc::new(crate::codecs::decode_stream_data(stream)?);
+                    self.obj_stream_cache.insert(obj_stream_num, Arc::clone(&decoded));
+                    decoded
+                };
+                // We need the stream dict for N/First values; resolve the stream again
+                // (it's cached in object_cache, so this is cheap)
                 let stream_obj = self.resolve(ObjRef::new(obj_stream_num, 0))?;
-                let stream = stream_obj.into_stream().ok_or_else(|| {
-                    BotlError::ParseError("Expected stream for object stream".into())
-                })?;
-                self.parse_object_from_stream(&stream, index)?
+                let stream_dict = stream_obj.as_stream()
+                    .map(|s| &s.dict)
+                    .ok_or_else(|| BotlError::ParseError("Expected stream for object stream".into()))?;
+                self.parse_object_from_decoded_data(&decoded, stream_dict, index)?
             }
             XrefEntry::Free { .. } => {
                 return Err(BotlError::ParseError(format!(
@@ -109,8 +129,9 @@ impl Document {
             }
         };
 
-        self.object_cache.insert(reference.obj_num, object.clone());
-        Ok(object)
+        let arc = Arc::new(object);
+        self.object_cache.insert(reference.obj_num, Arc::clone(&arc));
+        Ok(arc)
     }
 
     /// Parse objects from an object stream (ObjStm).
@@ -120,19 +141,60 @@ impl Document {
         target_index: u32,
     ) -> Result<PdfObject> {
         let decoded = crate::codecs::decode_stream_data(stream)?;
+        self.parse_object_from_decoded_data(&decoded, &stream.dict, target_index)
+    }
 
-        let n = stream
-            .dict
+    /// Parse a target object from already-decoded object stream data.
+    fn parse_object_from_decoded_data(
+        &self,
+        decoded: &[u8],
+        stream_dict: &PdfDict,
+        target_index: u32,
+    ) -> Result<PdfObject> {
+        let n = stream_dict
             .get_integer("N")
             .ok_or_else(|| BotlError::ParseError("Object stream missing N".into()))?
             as u32;
-        let first = stream
-            .dict
+        let first = stream_dict
             .get_integer("First")
             .ok_or_else(|| BotlError::ParseError("Object stream missing First".into()))?
             as usize;
 
-        // Parse the header: pairs of (obj_num, offset) for N objects
+        let header_data = &decoded[..first];
+        let mut parser = ObjectParser::new(header_data);
+        let mut pairs = Vec::new();
+        for _ in 0..n {
+            let obj_num = parser.parse_object()?.as_integer().unwrap_or(0) as u32;
+            let offset = parser.parse_object()?.as_integer().unwrap_or(0) as usize;
+            pairs.push((obj_num, offset));
+        }
+
+        if (target_index as usize) >= pairs.len() {
+            return Err(BotlError::ParseError(
+                "Object stream index out of range".into(),
+            ));
+        }
+
+        let (_obj_num, offset) = pairs[target_index as usize];
+        let abs_offset = first + offset;
+        let mut obj_parser = ObjectParser::new(&decoded[abs_offset..]);
+        obj_parser.parse_object()
+    }    /// Parse a target object from already-decoded object stream data.
+    fn parse_object_from_decoded(
+        &self,
+        decoded: &[u8],
+        stream_dict: &PdfDict,
+        target_index: u32,
+    ) -> Result<PdfObject> {
+        let n = stream_dict
+            .get_integer("N")
+            .ok_or_else(|| BotlError::ParseError("Object stream missing N".into()))?
+            as u32;
+        let first = stream_dict
+            .get_integer("First")
+            .ok_or_else(|| BotlError::ParseError("Object stream missing First".into()))?
+            as usize;
+
         let header_data = &decoded[..first];
         let mut parser = ObjectParser::new(header_data);
         let mut pairs = Vec::new();
@@ -161,7 +223,8 @@ impl Document {
             .root()
             .ok_or_else(|| BotlError::ParseError("No Root".into()))?;
         let obj = self.resolve(root_ref)?;
-        obj.into_dict()
+        obj.as_dict()
+            .cloned()
             .ok_or_else(|| BotlError::ParseError("Root is not a dictionary".into()))
     }
 
@@ -173,7 +236,7 @@ impl Document {
             .ok_or_else(|| BotlError::ParseError("Catalog missing Pages reference".into()))?;
         let pages_dict = self.resolve(pages_ref)?;
         let pages_dict = pages_dict
-            .into_dict()
+            .as_dict()
             .ok_or_else(|| BotlError::ParseError("Pages is not a dictionary".into()))?;
         Ok(pages_dict.get_integer("Count").unwrap_or(0) as usize)
     }
@@ -187,7 +250,8 @@ impl Document {
             .ok_or_else(|| BotlError::ParseError("Catalog missing Pages reference".into()))?;
         let pages_obj = self.resolve(pages_ref)?;
         pages_obj
-            .into_dict()
+            .as_dict()
+            .cloned()
             .ok_or_else(|| BotlError::ParseError("Pages is not a dictionary".into()))
     }
 
@@ -206,7 +270,8 @@ impl Document {
         }
         let page_ref = cache[page_index];
         let obj = self.resolve(page_ref)?;
-        obj.into_dict()
+        obj.as_dict()
+            .cloned()
             .ok_or_else(|| BotlError::ParseError("Page is not a dictionary".into()))
     }
 
@@ -275,7 +340,7 @@ impl Document {
     fn collect_pages(&mut self, node_ref: ObjRef, pages: &mut Vec<ObjRef>) -> Result<()> {
         let node_obj = self.resolve(node_ref)?;
         let node = node_obj
-            .into_dict()
+            .as_dict()
             .ok_or_else(|| BotlError::ParseError("Page tree node is not a dictionary".into()))?;
 
         let node_type = node.get_name("Type").unwrap_or("");
@@ -289,9 +354,9 @@ impl Document {
             Some(PdfObject::Array(arr)) => arr.clone(),
             Some(PdfObject::Reference(r)) => {
                 let resolved = self.resolve(*r)?;
-                match resolved {
-                    PdfObject::Array(arr) => arr,
-                    other => vec![other],
+                match resolved.as_ref() {
+                    PdfObject::Array(arr) => arr.clone(),
+                    other => vec![other.clone()],
                 }
             }
             _ => return Err(BotlError::ParseError("Pages node missing Kids".into())),
@@ -315,13 +380,13 @@ impl Document {
     ) -> Result<PdfDict> {
         let node_obj = self.resolve(node_ref)?;
         let node = node_obj
-            .into_dict()
+            .as_dict()
             .ok_or_else(|| BotlError::ParseError("Page tree node is not a dictionary".into()))?;
 
         let node_type = node.get_name("Type").unwrap_or("");
         if node_type == "Page" {
             if *counter == target {
-                return Ok(node);
+                return Ok(node.clone());
             }
             *counter += 1;
             return Err(BotlError::PageOutOfRange {
@@ -335,9 +400,9 @@ impl Document {
             Some(PdfObject::Array(arr)) => arr.clone(),
             Some(PdfObject::Reference(r)) => {
                 let resolved = self.resolve(*r)?;
-                match resolved {
-                    PdfObject::Array(arr) => arr,
-                    other => vec![other],
+                match resolved.as_ref() {
+                    PdfObject::Array(arr) => arr.clone(),
+                    other => vec![other.clone()],
                 }
             }
             _ => return Err(BotlError::ParseError("Pages node missing Kids".into())),

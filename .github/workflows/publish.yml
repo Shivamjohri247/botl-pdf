@@ -22,7 +22,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install build dependencies
-        run: pip install 'maturin>=1.7,<1.8' 'twine<6'
+        run: pip install 'maturin>=1.7,<1.8' 'twine>=6'
 
       - name: Build wheel
         run: maturin build --release --out dist --interpreter python3.12
@@ -55,7 +55,7 @@ jobs:
 
       - name: Publish to PyPI
         run: |
-          pip install 'twine<6'
+          pip install 'twine>=6'
           twine upload dist/*
         env:
           TWINE_USERNAME: __token__

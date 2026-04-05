@@ -7,6 +7,7 @@ name = "botl-pdf"
 dynamic = ["version"]
 description = "High-performance PDF processing: extract text, tables, images with a Rust + C core."
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [
     { name = "botl-pdf Contributors" }

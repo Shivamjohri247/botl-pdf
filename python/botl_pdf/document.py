@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 from botl_pdf._core import PyDocument, PyPage
+from botl_pdf.page import Page
 
 
 class Document:
@@ -57,19 +58,19 @@ class PageCollection:
     def __init__(self, doc: PyDocument):
         self._doc = doc
 
-    def __getitem__(self, index: int) -> PyPage:
+    def __getitem__(self, index: int) -> Page:
         if index < 0:
             index += len(self)
         if index < 0 or index >= len(self):
             raise IndexError(f"Page index {index} out of range (document has {len(self)} pages)")
-        return self._doc.get_page(index)
+        return Page(self._doc.get_page(index))
 
     def __len__(self) -> int:
         return self._doc.num_pages
 
     def __iter__(self):
         for i in range(len(self)):
-            yield self._doc.get_page(i)
+            yield Page(self._doc.get_page(i))
 
     def __repr__(self) -> str:
         return f"<PageCollection count={len(self)}>"

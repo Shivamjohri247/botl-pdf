@@ -9,7 +9,8 @@ mod writer;
 
 use document::{open, PyDocument};
 use elements::{
-    PyBBox, PyChar, PyGeomLine, PyGeomRect, PyTOCEntry, PyTextBlock, PyTextLine, PyWord,
+    PyBBox, PyChar, PyExtractedImage, PyGeomLine, PyGeomRect, PyTOCEntry, PyTextBlock, PyTextLine,
+    PyWord,
 };
 use page::{PyLayoutParams, PyPage};
 use writer::PyWriter;
@@ -37,6 +38,7 @@ fn botl_pdf_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyGeomLine>()?;
     m.add_class::<PyGeomRect>()?;
     m.add_class::<PyWriter>()?;
+    m.add_class::<PyExtractedImage>()?;
 
     Ok(())
 }

@@ -517,3 +517,51 @@ impl PyGeomRect {
         format!("GeomRect({})", self.inner.bbox)
     }
 }
+
+// ---------------------------------------------------------------------------
+// PyExtractedImage
+// ---------------------------------------------------------------------------
+
+/// An image extracted from a PDF page, with decoded RGB pixel data.
+#[pyclass(frozen)]
+#[derive(Clone)]
+pub struct PyExtractedImage {
+    width: usize,
+    height: usize,
+    data: Vec<u8>,
+}
+
+impl PyExtractedImage {
+    pub fn new(width: usize, height: usize, data: Vec<u8>) -> Self {
+        Self {
+            width,
+            height,
+            data,
+        }
+    }
+}
+
+#[pymethods]
+impl PyExtractedImage {
+    /// Image width in pixels.
+    #[getter]
+    fn width(&self) -> usize {
+        self.width
+    }
+
+    /// Image height in pixels.
+    #[getter]
+    fn height(&self) -> usize {
+        self.height
+    }
+
+    /// Raw RGB pixel data (3 bytes per pixel, row-major order).
+    #[getter]
+    fn data(&self) -> Vec<u8> {
+        self.data.clone()
+    }
+
+    fn __repr__(&self) -> String {
+        format!("ExtractedImage({}x{})", self.width, self.height)
+    }
+}

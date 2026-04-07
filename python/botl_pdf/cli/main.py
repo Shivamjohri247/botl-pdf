@@ -24,6 +24,11 @@ def app() -> None:
             output: Optional[str] = typer.Option(None, "-o", "--output", help="Output file path"),
             pages: Optional[str] = typer.Option(None, "--pages", help="Page range (e.g., 1-5)"),
             layout: bool = typer.Option(False, "--layout", help="Preserve spatial layout"),
+            ocr: Optional[str] = typer.Option(
+                None, "--ocr",
+                help="OCR mode: 'auto' (use OCR if no text), 'easyocr', 'tesseract'",
+            ),
+            ocr_lang: str = typer.Option("eng", "--ocr-lang", help="OCR language code"),
         ) -> None:
             """Extract text from a PDF file."""
             from botl_pdf._core import open as _open
@@ -33,7 +38,17 @@ def app() -> None:
             parts = []
             for i in page_indices:
                 page = doc.get_page(i)
-                parts.append(page.extract_text(layout=layout))
+                if ocr:
+                    from botl_pdf.page import Page
+
+                    wrapped = Page(page)
+                    parts.append(wrapped.extract_text(
+                        layout=layout,
+                        ocr=ocr,
+                        ocr_language=ocr_lang,
+                    ))
+                else:
+                    parts.append(page.extract_text(layout=layout))
 
             result = "\n\n".join(parts)
             if output:
@@ -67,18 +82,58 @@ def app() -> None:
             path: str,
             format: str = typer.Option("markdown", "--format", help="Output format: markdown, text"),
             output: Optional[str] = typer.Option(None, "-o", "--output", help="Output file path"),
+            ocr: Optional[str] = typer.Option(
+                None, "--ocr",
+                help="OCR mode: 'auto' (use OCR if no text), 'easyocr', 'tesseract'",
+            ),
+            ocr_lang: str = typer.Option("eng", "--ocr-lang", help="OCR language code"),
         ) -> None:
             """Export PDF to various formats."""
             from botl_pdf.export import to_markdown, to_text
 
+            ocr_mode = ocr if ocr else False
             if format == "markdown":
-                result = to_markdown(path)
+                result = to_markdown(path, ocr=ocr_mode, ocr_language=ocr_lang)
             elif format == "text":
-                result = to_text(path)
+                result = to_text(path, ocr=ocr_mode, ocr_language=ocr_lang)
             else:
                 print(f"Unknown format: {format}", file=sys.stderr)
                 sys.exit(1)
 
+            if output:
+                with open(output, "w", encoding="utf-8") as f:
+                    f.write(result)
+            else:
+                sys.stdout.write(result)
+                sys.stdout.write("\n")
+
+        @_typer_app.command()
+        def ocr(
+            path: str,
+            output: Optional[str] = typer.Option(None, "-o", "--output", help="Output file path"),
+            backend: Optional[str] = typer.Option(
+                None, "-b", "--backend",
+                help="OCR backend: 'auto', 'easyocr', 'tesseract'",
+            ),
+            language: str = typer.Option("eng", "-l", "--language", help="OCR language code"),
+            pages: Optional[str] = typer.Option(None, "--pages", help="Page range (e.g., 1-5)"),
+        ) -> None:
+            """Run OCR on a PDF file (scanned/image-only pages)."""
+            from botl_pdf._core import open as _open
+            from botl_pdf.page import Page
+
+            doc = _open(path)
+            page_indices = _parse_page_range(pages, doc.num_pages)
+            ocr_mode = backend or "auto"
+            parts = []
+            for i in page_indices:
+                page = Page(doc.get_page(i))
+                parts.append(page.extract_text(
+                    ocr=ocr_mode,
+                    ocr_language=language,
+                ))
+
+            result = "\n\n".join(parts)
             if output:
                 with open(output, "w", encoding="utf-8") as f:
                     f.write(result)
@@ -129,6 +184,8 @@ def _run_with_argparse() -> None:
     text_parser.add_argument("-o", "--output", help="Output file path")
     text_parser.add_argument("--pages", help="Page range (e.g., 1-5)")
     text_parser.add_argument("--layout", action="store_true", help="Preserve spatial layout")
+    text_parser.add_argument("--ocr", default=None, help="OCR mode: auto, easyocr, tesseract")
+    text_parser.add_argument("--ocr-lang", default="eng", help="OCR language code")
 
     # info command
     info_parser = subparsers.add_parser("info", help="Show PDF metadata")
@@ -139,6 +196,16 @@ def _run_with_argparse() -> None:
     export_parser.add_argument("path", help="Path to PDF file")
     export_parser.add_argument("--format", default="markdown", help="Output format: markdown, text")
     export_parser.add_argument("-o", "--output", help="Output file path")
+    export_parser.add_argument("--ocr", default=None, help="OCR mode: auto, easyocr, tesseract")
+    export_parser.add_argument("--ocr-lang", default="eng", help="OCR language code")
+
+    # ocr command
+    ocr_parser = subparsers.add_parser("ocr", help="Run OCR on a PDF (scanned/image pages)")
+    ocr_parser.add_argument("path", help="Path to PDF file")
+    ocr_parser.add_argument("-o", "--output", help="Output file path")
+    ocr_parser.add_argument("-b", "--backend", default=None, help="OCR backend: auto, easyocr, tesseract")
+    ocr_parser.add_argument("-l", "--language", default="eng", help="OCR language code")
+    ocr_parser.add_argument("--pages", help="Page range (e.g., 1-5)")
 
     args = parser.parse_args()
 
@@ -151,7 +218,20 @@ def _run_with_argparse() -> None:
     if args.command == "text":
         doc = _open(args.path)
         page_indices = _parse_page_range(args.pages, doc.num_pages)
-        parts = [doc.get_page(i).extract_text(layout=args.layout) for i in page_indices]
+        parts = []
+        for i in page_indices:
+            raw_page = doc.get_page(i)
+            if args.ocr:
+                from botl_pdf.page import Page
+
+                wrapped = Page(raw_page)
+                parts.append(wrapped.extract_text(
+                    layout=args.layout,
+                    ocr=args.ocr,
+                    ocr_language=args.ocr_lang,
+                ))
+            else:
+                parts.append(raw_page.extract_text(layout=args.layout))
         result = "\n\n".join(parts)
         if args.output:
             with open(args.output, "w", encoding="utf-8") as f:
@@ -174,14 +254,36 @@ def _run_with_argparse() -> None:
     elif args.command == "export":
         from botl_pdf.export import to_markdown, to_text
 
+        ocr_mode = args.ocr if args.ocr else False
         if args.format == "markdown":
-            result = to_markdown(args.path)
+            result = to_markdown(args.path, ocr=ocr_mode, ocr_language=args.ocr_lang)
         elif args.format == "text":
-            result = to_text(args.path)
+            result = to_text(args.path, ocr=ocr_mode, ocr_language=args.ocr_lang)
         else:
             print(f"Unknown format: {args.format}", file=sys.stderr)
             sys.exit(1)
 
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(result)
+        else:
+            sys.stdout.write(result)
+            sys.stdout.write("\n")
+
+    elif args.command == "ocr":
+        from botl_pdf.page import Page
+
+        doc = _open(args.path)
+        page_indices = _parse_page_range(args.pages, doc.num_pages)
+        ocr_mode = args.backend or "auto"
+        parts = []
+        for i in page_indices:
+            page = Page(doc.get_page(i))
+            parts.append(page.extract_text(
+                ocr=ocr_mode,
+                ocr_language=args.language,
+            ))
+        result = "\n\n".join(parts)
         if args.output:
             with open(args.output, "w", encoding="utf-8") as f:
                 f.write(result)

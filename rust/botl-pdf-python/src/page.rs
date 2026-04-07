@@ -7,12 +7,12 @@ use botl_pdf_core::layout::strategy::{
     analyze_layout, blocks_to_layout_text, blocks_to_text, LayoutParams,
 };
 use botl_pdf_core::parser::document::Document;
-use botl_pdf_core::parser::objects::PdfObject;
+use botl_pdf_core::parser::objects::{ObjRef, PdfDict, PdfObject};
 use botl_pdf_core::text::cmap::CMap;
 use botl_pdf_core::text::fonts::{Font, FontCache};
 use botl_pdf_core::text::operator::interpret_content_stream;
 
-use crate::elements::{PyChar, PyGeomLine, PyGeomRect};
+use crate::elements::{PyChar, PyExtractedImage, PyGeomLine, PyGeomRect};
 use crate::errors::IntoPyResult;
 
 // ---------------------------------------------------------------------------
@@ -349,6 +349,150 @@ fn get_layout_params(
     Some(params)
 }
 
+/// Resolve a dictionary entry that may be stored as an indirect reference.
+fn resolve_dict_entry(dict: &PdfDict, key: &str, doc: &mut Document) -> Option<PdfDict> {
+    let value = dict.get_str(key)?;
+    // Try inline dict first
+    if let Some(d) = value.as_dict() {
+        return Some(d.clone());
+    }
+    // Try resolving indirect reference
+    if let Some(r) = value.as_reference() {
+        if let Ok(obj) = doc.resolve(r) {
+            if let Some(d) = obj.as_dict() {
+                return Some(d.clone());
+            }
+        }
+    }
+    None
+}
+
+/// Walk the page's XObject dictionary (including inherited entries from
+/// parent page-tree nodes) and extract all Image XObjects as RGB.
+///
+/// PDF Resources can be inherited from parent Pages nodes in the page tree.
+/// This function walks up Parent references and resolves indirect references
+/// for Resources and XObject dictionaries.
+fn extract_images_from_page(
+    page_dict: &PdfDict,
+    doc: &mut Document,
+) -> PyResult<Vec<PyExtractedImage>> {
+    use std::collections::HashSet;
+
+    let mut images = Vec::new();
+    let mut seen_keys: HashSet<Vec<u8>> = HashSet::new();
+
+    // Walk from page dict up through Parent references
+    let mut current = page_dict.clone();
+    loop {
+        // Resolve Resources dict (may be indirect reference)
+        if let Some(res_dict) = resolve_dict_entry(&current, "Resources", doc) {
+            // Resolve XObject dict (may be indirect reference)
+            if let Some(xo_dict) = resolve_dict_entry(&res_dict, "XObject", doc) {
+                for (key, value) in xo_dict.iter() {
+                    // Skip duplicates (child overrides parent)
+                    if seen_keys.contains(key) {
+                        continue;
+                    }
+                    seen_keys.insert(key.to_vec());
+
+                    let obj_ref: ObjRef = match value.as_reference() {
+                        Some(r) => r,
+                        None => continue,
+                    };
+
+                    let obj = match doc.resolve(obj_ref).into_py() {
+                        Ok(o) => o,
+                        Err(_) => continue,
+                    };
+
+                    let stream = match obj.as_stream() {
+                        Some(s) => s,
+                        None => continue,
+                    };
+
+                    // Only process Image XObjects
+                    match stream.dict.get_name("Subtype") {
+                        Some("Image") => {}
+                        _ => continue,
+                    }
+
+                    let width = match stream.dict.get_integer("Width") {
+                        Some(w) if w > 0 => w as usize,
+                        _ => continue,
+                    };
+                    let height = match stream.dict.get_integer("Height") {
+                        Some(h) if h > 0 => h as usize,
+                        _ => continue,
+                    };
+
+                    // Decode the stream (handles FlateDecode, DCTDecode, etc.)
+                    let decoded = match crate::codecs_reexport::decode_stream(stream) {
+                        Ok(d) => d,
+                        Err(_) => continue,
+                    };
+
+                    let pixel_count = width * height;
+                    if pixel_count == 0 {
+                        continue;
+                    }
+
+                    // Determine channel count from decoded data length
+                    let channels = decoded.len() / pixel_count;
+
+                    let rgb_data = match channels {
+                        1 => {
+                            // Grayscale → RGB
+                            let mut rgb = Vec::with_capacity(pixel_count * 3);
+                            for &gray in &decoded[..pixel_count] {
+                                rgb.push(gray);
+                                rgb.push(gray);
+                                rgb.push(gray);
+                            }
+                            rgb
+                        }
+                        3 => decoded,
+                        4 => {
+                            // CMYK → RGB
+                            let mut rgb = Vec::with_capacity(pixel_count * 3);
+                            for chunk in decoded.chunks_exact(4).take(pixel_count) {
+                                let c = chunk[0] as f32 / 255.0;
+                                let m = chunk[1] as f32 / 255.0;
+                                let y = chunk[2] as f32 / 255.0;
+                                let k = chunk[3] as f32 / 255.0;
+                                rgb.push(((1.0 - c) * (1.0 - k) * 255.0).round() as u8);
+                                rgb.push(((1.0 - m) * (1.0 - k) * 255.0).round() as u8);
+                                rgb.push(((1.0 - y) * (1.0 - k) * 255.0).round() as u8);
+                            }
+                            rgb
+                        }
+                        _ => continue,
+                    };
+
+                    images.push(PyExtractedImage::new(width, height, rgb_data));
+                }
+            }
+        }
+
+        // Walk up to parent page-tree node
+        match current.get_reference("Parent") {
+            Some(parent_ref) => match doc.resolve(parent_ref).into_py() {
+                Ok(parent_obj) => match parent_obj.as_dict() {
+                    Some(parent_dict) => {
+                        current = parent_dict.clone();
+                        continue;
+                    }
+                    None => break,
+                },
+                Err(_) => break,
+            },
+            None => break,
+        }
+    }
+
+    Ok(images)
+}
+
 // ---------------------------------------------------------------------------
 // PyLayoutParams helper for Python
 // ---------------------------------------------------------------------------
@@ -520,5 +664,29 @@ impl PyPage {
             "Page({}, width={:.1}, height={:.1})",
             self.page_number, self.width, self.height
         )
+    }
+
+    /// Whether this page contains any extractable text characters.
+    ///
+    /// Returns False for image-only/scanned pages that would need OCR.
+    #[getter]
+    fn has_text(&self) -> PyResult<bool> {
+        let data = self.ensure_extracted()?;
+        Ok(!data.chars.is_empty())
+    }
+
+    /// Extract embedded images from this page.
+    ///
+    /// Walks the page's XObject dictionary and returns all Image XObjects
+    /// with their decoded pixel data converted to RGB.
+    fn extract_images(&self, py: Python<'_>) -> PyResult<Vec<PyExtractedImage>> {
+        let doc_handle = self.doc.clone();
+        let page_index = self.page_number;
+
+        py.allow_threads(|| {
+            let mut doc = doc_handle.lock();
+            let page_dict = doc.get_page(page_index).into_py()?;
+            extract_images_from_page(&page_dict, &mut doc)
+        })
     }
 }
